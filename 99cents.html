@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Ads - Beli Ruang Iklan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        canvas {
+            image-rendering: pixelated; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #tooltip {
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar / Control Panel -->
+    <aside class="w-full md:w-80 bg-white shadow-xl flex flex-col z-10 shrink-0 h-auto md:h-full relative overflow-y-auto">
+        <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white z-20 shadow-sm">
+            <div class="flex items-center gap-3">
+                <img src="99cents_logo.jpeg" alt="99cents Logo" class="h-10 w-auto object-contain rounded-md">
+                <h1 class="text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
+            </div>
+            
+            <div class="flex items-center gap-2 cursor-pointer select-none" id="lang-toggle-container">
+                <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
+                <div class="relative w-10 h-5 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
+                    <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0" id="switch-knob"></div>
+                </div>
+                <span class="text-xs font-bold text-gray-400 transition-colors" id="lbl-en">EN</span>
+            </div>
+        </div>
+        <div class="px-5 py-3 border-b bg-gray-50">
+            <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda secara permanen.</p>
+        </div>
+
+        <div class="p-6 flex-1 flex flex-col">
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+                <h2 class="font-semibold text-blue-800 text-sm mb-2" data-i18n="status_board">Status Papan</h2>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="sold">Terjual:</span>
+                    <span class="font-medium text-gray-900" id="stats-sold">0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="available">Tersedia:</span>
+                    <span class="font-medium text-gray-900" id="stats-available">10.000 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mt-2 pt-2 border-t border-blue-200">
+                    <span class="text-gray-600" data-i18n="price_per_block">Harga per Blok:</span>
+                    <span class="font-bold text-green-600">$0.99</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* 1 blok = 10x10 pixels (100px).</p>
+            </div>
+
+            <div class="mb-4 flex-1">
+                <h3 class="font-semibold text-gray-800 mb-2" data-i18n="instruction">Instruksi:</h3>
+                <ol class="list-decimal pl-5 text-sm text-gray-600 space-y-2">
+                    <li data-i18n="inst_1">Arahkan kursor ke papan di sebelah kanan.</li>
+                    <li><strong data-i18n="inst_2_bold">Klik dan seret (drag)</strong> <span data-i18n="inst_2">untuk menyeleksi area kotak (pixel) yang ingin Anda beli.</span></li>
+                    <li data-i18n="inst_3">Pastikan area tidak menabrak iklan lain.</li>
+                    <li data-i18n="inst_4">Selesaikan pembayaran, lalu isi konten iklan.</li>
+                </ol>
+            </div>
+
+            <!-- Selection Info -->
+            <div id="selection-panel" class="bg-gray-50 border border-gray-200 rounded-lg p-4 opacity-50 transition-opacity">
+                <h3 class="font-semibold text-gray-800 text-sm mb-3" data-i18n="your_selection">Area Pilihan Anda</h3>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="size">Ukuran:</span>
+                    <span class="font-medium text-gray-900" id="sel-size">0 x 0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-3">
+                    <span class="text-gray-600" data-i18n="total_price">Total Harga:</span>
+                    <span class="font-bold text-blue-600 text-lg" id="sel-price">$0.00</span>
+                </div>
+                <button id="btn-init-payment" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors" data-i18n="proceed_payment">
+                    Lanjut ke Pembayaran
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Canvas Area -->
+    <main class="flex-1 relative overflow-auto flex bg-gray-200" id="canvas-container">
+        <div class="m-auto p-8 flex items-center justify-center min-w-max min-h-max">
+            <canvas id="gridCanvas" width="1000" height="1000" class="bg-white rounded-sm cursor-crosshair"></canvas>
+        </div>
+
+        <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
+            <p id="tooltip-text" class="font-semibold">Text</p>
+            <p id="tooltip-link" class="text-blue-300">Link</p>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- 1. Modal Setup Content -->
+    <div id="modal-content" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-gray-800" data-i18n="ad_details">Detail Iklan Anda</h2>
+                <button onclick="closeModal('modal-content')" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="upload_img">Unggah Gambar (Sesuai Ukuran)</label>
+                    <input type="file" id="ad-image" accept="image/png, image/jpeg, image/gif" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="img_note">Gambar akan dire-size sesuai proporsi area yang dipilih.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_text">Teks/Judul Iklan (Muncul saat dihover)</label>
+                    <input type="text" id="ad-text" data-i18n-ph="ad_text_ph" placeholder="Cth: Sewa Mobil Jakarta" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_link">Tautan Web (Opsional)</label>
+                    <input type="url" id="ad-link" data-i18n-ph="ad_link_ph" placeholder="https://www.websiteanda.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="pt-4 flex justify-end gap-2">
+                    <button onclick="closeModal('modal-content')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg" data-i18n="btn_cancel">Batal</button>
+                    <button id="btn-publish-ad" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg" data-i18n="btn_publish">Publikasikan Iklan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Modal Payment Simulation -->
+    <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative overflow-hidden">
+            
+            <div id="payment-loading" class="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center hidden">
+                <div class="loader mb-3"></div>
+                <p class="text-sm font-medium text-gray-700" data-i18n="processing">Memproses pembayaran...</p>
+            </div>
+
+            <h2 class="text-xl font-bold text-gray-800 mb-1" data-i18n="secure_checkout">Secure Checkout</h2>
+            <p class="text-sm text-gray-500 mb-6" data-i18n="dummy_payment">Dummy Payment Gateway</p>
+
+            <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left border border-gray-100">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
+                <p class="text-2xl font-bold text-gray-900" id="payment-amount">$0.00</p>
+                <div class="mt-3 pt-3 border-t border-gray-200 flex justify-between text-sm">
+                    <span class="text-gray-600" data-i18n="item">Item:</span>
+                    <span class="font-medium text-gray-900" data-i18n="pixel_ad_space">Pixel Ad Space</span>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-6" data-i18n="sim_note">
+                This is a simulation. Click "Pay Now" to proceed to uploading your ad content.
+            </div>
+
+            <div class="flex justify-between gap-3">
+                <button onclick="closeModal('modal-payment')" class="w-full py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" data-i18n="btn_cancel">Cancel</button>
+                <button id="btn-pay-now" class="w-full py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span data-i18n="pay_now">Pay Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[60] bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 translate-y-[-150%] opacity-0">
+        <span id="toast-icon"></span>
+        <span id="toast-msg" class="text-sm font-medium">Message</span>
+    </div>
+
+    <!-- Script / Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Translation Dictionary
+        const i18nData = {
+            id: {
+                subtitle: "Beli ruang pixel untuk iklan Anda secara permanen.",
+                status_board: "Status Papan",
+                sold: "Terjual:",
+                available: "Tersedia:",
+                price_per_block: "Harga per Blok:",
+                note_block: "* 1 blok = 10x10 pixels (100px).",
+                instruction: "Instruksi:",
+                inst_1: "Arahkan kursor ke papan di sebelah kanan.",
+                inst_2_bold: "Klik dan seret (drag)",
+                inst_2: "untuk menyeleksi area kotak (pixel) yang ingin Anda beli.",
+                inst_3: "Pastikan area tidak menabrak iklan lain.",
+                inst_4: "Selesaikan pembayaran, lalu isi konten iklan.",
+                your_selection: "Area Pilihan Anda",
+                size: "Ukuran:",
+                total_price: "Total Harga:",
+                proceed_payment: "Lanjut ke Pembayaran",
+                ad_details: "Detail Iklan Anda",
+                upload_img: "Unggah Gambar (Sesuai Ukuran)",
+                img_note: "Gambar akan dire-size sesuai proporsi area yang dipilih.",
+                ad_text: "Teks/Judul Iklan (Muncul saat dihover)",
+                ad_text_ph: "Cth: Sewa Mobil Jakarta",
+                ad_link: "Tautan Web (Opsional)",
+                ad_link_ph: "https://www.websiteanda.com",
+                btn_cancel: "Batal",
+                btn_publish: "Publikasikan Iklan",
+                secure_checkout: "Checkout Aman",
+                dummy_payment: "Gateway Pembayaran Simulasi",
+                total_due: "Total Tagihan",
+                item: "Item:",
+                pixel_ad_space: "Ruang Iklan Pixel",
+                sim_note: "Ini adalah simulasi. Klik 'Bayar Sekarang' untuk lanjut mengunggah konten iklan.",
+                pay_now: "Bayar Sekarang",
+                msg_collision: "Area bertabrakan dengan iklan lain!",
+                msg_empty: "Pilih area kosong terlebih dahulu.",
+                msg_pay_success: "Pembayaran Berhasil! Silakan unggah gambar / isi detail iklan.",
+                msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
+                msg_unavail: "Area ini tidak lagi tersedia.",
+                msg_img_fail: "Gagal memproses gambar. Menyimpan tanpa gambar.",
+                msg_pub_success: "Iklan berhasil dipublikasikan!",
+                msg_save_fail: "Gagal menyimpan iklan ke server.",
+                blocks: "blok",
+                processing: "Memproses pembayaran...",
+                tooltip_link: "Klik untuk mengunjungi link"
+            },
+            en: {
+                subtitle: "Buy pixel space for your ad permanently.",
+                status_board: "Board Status",
+                sold: "Sold:",
+                available: "Available:",
+                price_per_block: "Price per Block:",
+                note_block: "* 1 block = 10x10 pixels (100px).",
+                instruction: "Instructions:",
+                inst_1: "Hover over the board on the right.",
+                inst_2_bold: "Click and drag",
+                inst_2: "to select the pixel area you want to buy.",
+                inst_3: "Ensure the area doesn't overlap with other ads.",
+                inst_4: "Complete the payment, then fill in the ad content.",
+                your_selection: "Your Selected Area",
+                size: "Size:",
+                total_price: "Total Price:",
+                proceed_payment: "Proceed to Payment",
+                ad_details: "Your Ad Details",
+                upload_img: "Upload Image (Fits Size)",
+                img_note: "Image will be resized proportionally to the selected area.",
+                ad_text: "Ad Text/Title (Shows on hover)",
+                ad_text_ph: "Ex: Buy my awesome product",
+                ad_link: "Web Link (Optional)",
+                ad_link_ph: "https://www.yourwebsite.com",
+                btn_cancel: "Cancel",
+                btn_publish: "Publish Ad",
+                secure_checkout: "Secure Checkout",
+                dummy_payment: "Dummy Payment Gateway",
+                total_due: "Total Due",
+                item: "Item:",
+                pixel_ad_space: "Pixel Ad Space",
+                sim_note: "This is a simulation. Click 'Pay Now' to proceed to uploading your ad content.",
+                pay_now: "Pay Now",
+                msg_collision: "Area overlaps with another ad!",
+                msg_empty: "Please select an empty area first.",
+                msg_pay_success: "Payment Successful! Please upload image / fill ad details.",
+                msg_upload_req: "Please upload an image or enter ad text.",
+                msg_unavail: "This area is no longer available.",
+                msg_img_fail: "Failed to process image. Saving without image.",
+                msg_pub_success: "Ad successfully published!",
+                msg_save_fail: "Failed to save ad to server.",
+                blocks: "blocks",
+                processing: "Processing payment...",
+                tooltip_link: "Click to visit link"
+            }
+        };
+
+        let currentLang = 'id';
+        const t = (key) => i18nData[currentLang][key];
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18nData[currentLang][key]) el.innerText = i18nData[currentLang][key];
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (i18nData[currentLang][key]) el.placeholder = i18nData[currentLang][key];
+            });
+            
+            // Update switch UI
+            const switchBg = document.getElementById('switch-bg');
+            const switchKnob = document.getElementById('switch-knob');
+            const lblId = document.getElementById('lbl-id');
+            const lblEn = document.getElementById('lbl-en');
+            
+            if (switchBg) {
+                 if (currentLang === 'en') {
+                    switchBg.classList.replace('bg-gray-300', 'bg-blue-600');
+                    switchKnob.classList.replace('translate-x-0', 'translate-x-5');
+                    lblEn.classList.replace('text-gray-400', 'text-gray-800');
+                    lblId.classList.replace('text-gray-800', 'text-gray-400');
+                } else {
+                    switchBg.classList.replace('bg-blue-600', 'bg-gray-300');
+                    switchKnob.classList.replace('translate-x-5', 'translate-x-0');
+                    lblId.classList.replace('text-gray-400', 'text-gray-800');
+                    lblEn.classList.replace('text-gray-800', 'text-gray-400');
+                }
+            }
+
+            calculateStats();
+            updateSelectionUI();
+        }
+
+        document.getElementById('lang-toggle-container').addEventListener('click', () => {
+            currentLang = currentLang === 'id' ? 'en' : 'id';
+            applyLanguage();
+        });
+
+        // Constants
+        const CANVAS_SIZE = 1000;
+        const GRID_SIZE = 100;
+        const BLOCK_PX = CANVAS_SIZE / GRID_SIZE; // 10px per block
+        const PRICE_PER_BLOCK = 0.99; // $0.99 per block
+
+        // Environment Variables (Provided by System)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'pixel-ads-dummy';
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        let firebaseConfig;
+        
+        try { firebaseConfig = JSON.parse(firebaseConfigStr); } 
+        catch(e) { firebaseConfig = { projectId: "dummy" }; }
+
+        let app, db, auth, userId = null;
+        let ads = [];
+        let isFirebaseActive = Object.keys(firebaseConfig).length > 1;
+
+        // UI Elements
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        
+        const selectionPanel = document.getElementById('selection-panel');
+        const selSizeText = document.getElementById('sel-size');
+        const selPriceText = document.getElementById('sel-price');
+        const btnInitPayment = document.getElementById('btn-init-payment');
+        const statsSold = document.getElementById('stats-sold');
+        const statsAvail = document.getElementById('stats-available');
+        
+        const tooltip = document.getElementById('tooltip');
+        const tooltipText = document.getElementById('tooltip-text');
+        const tooltipLink = document.getElementById('tooltip-link');
+
+        // State
+        let isDragging = false;
+        let currentSelection = null;
+        let hoverGridPos = { x: -1, y: -1 };
+        let cachedImages = {}; 
+
+        const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(num);
+
+        async function init() {
+            applyLanguage();
+            if (isFirebaseActive) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) { userId = user.uid; fetchAds(); }
+                    });
+                } catch (error) {
+                    showToast("Gagal terhubung ke server / Failed connection.", "error");
+                    calculateStats(); drawCanvas();
+                }
+            } else {
+                userId = "local_" + Math.random().toString(36).substr(2, 9);
+                calculateStats(); drawCanvas();
+            }
+            setupCanvasEvents(); setupUIEvents();
+        }
+
+        function fetchAds() {
+            if (!userLoggedIn()) return;
+            const adsRef = collection(db, 'artifacts', appId, 'public', 'data', 'ads');
+            onSnapshot(adsRef, (snapshot) => {
+                ads = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data(); ads.push(data); preloadAdImage(data.imageUrl);
+                });
+                calculateStats(); drawCanvas();
+            });
+        }
+
+        function preloadAdImage(url) {
+            if (url && !cachedImages[url]) {
+                const img = new Image();
+                img.onload = () => { cachedImages[url] = img; drawCanvas(); };
+                img.src = url;
+            }
+        }
+
+        function calculateStats() {
+            let soldBlocks = 0;
+            ads.forEach(ad => { soldBlocks += (ad.w * ad.h); });
+            const totalBlocks = GRID_SIZE * GRID_SIZE; // 10.000
+            const availBlocks = totalBlocks - soldBlocks;
+            const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
+
+            statsSold.innerText = `${soldBlocks.toLocaleString(numFmt)} ${t('blocks')}`;
+            statsAvail.innerText = `${availBlocks.toLocaleString(numFmt)} ${t('blocks')}`;
+        }
+
+        function userLoggedIn() { return isFirebaseActive && userId; }
+
+        function drawCanvas() {
+            ctx.fillStyle = "#ffffff"; // White Background
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            // Grid Lines
+            ctx.strokeStyle = "#f3f4f6";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i <= CANVAS_SIZE; i += BLOCK_PX) {
+                ctx.moveTo(i, 0); ctx.lineTo(i, CANVAS_SIZE);
+                ctx.moveTo(0, i); ctx.lineTo(CANVAS_SIZE, i);
+            }
+            ctx.stroke();
+
+            // Ads
+            ads.forEach(ad => {
+                const pxX = ad.x * BLOCK_PX;
+                const pxY = ad.y * BLOCK_PX;
+                const pxW = ad.w * BLOCK_PX;
+                const pxH = ad.h * BLOCK_PX;
+
+                if (ad.imageUrl && cachedImages[ad.imageUrl] && cachedImages[ad.imageUrl].complete) {
+                    ctx.drawImage(cachedImages[ad.imageUrl], pxX, pxY, pxW, pxH);
+                } else {
+                    ctx.fillStyle = ad.color || '#3b82f6';
+                    ctx.fillRect(pxX, pxY, pxW, pxH);
+                    
+                    if (pxW >= 20 && pxH >= 15 && ad.text) {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.font = "bold 11px Inter, sans-serif";
+                        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                        ctx.fillText(ad.text.substring(0, Math.floor(pxW / 7)), pxX + pxW / 2, pxY + pxH / 2);
+                    }
+                }
+                ctx.strokeStyle = "rgba(0,0,0,0.15)";
+                ctx.strokeRect(pxX, pxY, pxW, pxH);
+            });
+
+            // Current Selection Indicator
+            if (currentSelection) {
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                const pxX = rect.x * BLOCK_PX, pxY = rect.y * BLOCK_PX;
+                const pxW = rect.w * BLOCK_PX, pxH = rect.h * BLOCK_PX;
+
+                const isValid = isAreaFree(rect.x, rect.y, rect.w, rect.h);
+                ctx.fillStyle = isValid ? "rgba(59, 130, 246, 0.45)" : "rgba(239, 68, 68, 0.45)";
+                ctx.fillRect(pxX, pxY, pxW, pxH);
+                
+                ctx.strokeStyle = isValid ? "#2563eb" : "#dc2626";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(pxX, pxY, pxW, pxH);
+            }
+        }
+
+        function getGridCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+            let x = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_SIZE - 0.1));
+            let y = Math.max(0, Math.min((clientY - rect.top) * scaleY, CANVAS_SIZE - 0.1));
+            return { x: Math.floor(x / BLOCK_PX), y: Math.floor(y / BLOCK_PX) };
+        }
+
+        function getSelectionRect(startX, startY, endX, endY) {
+            const minX = Math.min(startX, endX), minY = Math.min(startY, endY);
+            return { x: minX, y: minY, w: Math.max(startX, endX) - minX + 1, h: Math.max(startY, endY) - minY + 1 };
+        }
+
+        function isAreaFree(x, y, w, h) {
+            return !ads.some(ad => (x < ad.x + ad.w && x + w > ad.x && y < ad.y + ad.h && y + h > ad.y));
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', (e) => {
+                if(e.button !== 0) return;
+                const coords = getGridCoords(e.clientX, e.clientY);
+                isDragging = true;
+                currentSelection = { startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y };
+                drawCanvas();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (e.target === canvas && !isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    if(coords.x !== hoverGridPos.x || coords.y !== hoverGridPos.y) {
+                        hoverGridPos = coords;
+                        const hoveredAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+
+                        if (hoveredAd && (hoveredAd.text || hoveredAd.link)) {
+                            tooltip.style.opacity = '1';
+                            tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
+                            tooltipText.innerText = hoveredAd.text || "Pixel Ad";
+                            tooltipLink.innerText = hoveredAd.link ? t('tooltip_link') : "";
+                            canvas.style.cursor = "pointer";
+                        } else {
+                            tooltip.style.opacity = '0'; canvas.style.cursor = "crosshair";
+                        }
+                    } else if (tooltip.style.opacity === '1') {
+                        tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
+                    }
+                } else { tooltip.style.opacity = '0'; }
+
+                if (isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    currentSelection.endX = coords.x; currentSelection.endY = coords.y;
+                    drawCanvas(); updateSelectionUI();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                    if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                        showToast(t('msg_collision'), "error");
+                        if (btnInitPayment) btnInitPayment.disabled = true;
+                    } else {
+                        if (btnInitPayment) btnInitPayment.disabled = false;
+                    }
+                    updateSelectionUI();
+                }
+            });
+            
+            canvas.addEventListener('click', (e) => {
+                if (currentSelection && (currentSelection.startX !== currentSelection.endX || currentSelection.startY !== currentSelection.endY)) return;
+                const coords = getGridCoords(e.clientX, e.clientY);
+                const clickedAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+                if (clickedAd && clickedAd.link) {
+                    let url = clickedAd.link;
+                    if(!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+                    window.open(url, '_blank');
+                }
+            });
+            canvas.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
+        function updateSelectionUI() {
+            if (!currentSelection) {
+                selectionPanel.classList.add('opacity-50');
+                if (btnInitPayment) btnInitPayment.disabled = true;
+                selSizeText.innerText = `0 x 0 ${t('blocks')}`;
+                selPriceText.innerText = formatCurrency(0);
+                return;
+            }
+            selectionPanel.classList.remove('opacity-50');
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            
+            const blocks = rect.w * rect.h;
+            const price = blocks * PRICE_PER_BLOCK;
+            const totalPixels = blocks * (BLOCK_PX * BLOCK_PX);
+            const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
+
+            selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${totalPixels.toLocaleString(numFmt)} px)`;
+            selPriceText.innerText = formatCurrency(price);
+            document.getElementById('payment-amount').innerText = formatCurrency(price);
+        }
+
+        function setupUIEvents() {
+            document.getElementById('btn-init-payment').addEventListener('click', () => {
+                if (!currentSelection) return;
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                     showToast(t('msg_empty'), "error"); return;
+                }
+                openModal('modal-payment');
+            });
+
+            document.getElementById('btn-pay-now').addEventListener('click', async () => {
+                const loader = document.getElementById('payment-loading');
+                loader.classList.remove('hidden');
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                loader.classList.add('hidden');
+                closeModal('modal-payment');
+                showToast(t('msg_pay_success'), "success");
+                
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 300);
+            });
+
+            document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
+        }
+
+        window.openModal = (id) => {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.remove('hidden'); void modal.offsetWidth;
+            modal.classList.remove('opacity-0'); inner.classList.remove('scale-95');
+        };
+
+        window.closeModal = (id) => {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.add('opacity-0'); inner.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        function showToast(message, type="info") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = message;
+            
+            const baseClass = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[60] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300";
+            if (type === "error") {
+                toast.className = baseClass + " bg-red-600";
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+            } else if(type === "success") {
+                toast.className = baseClass + " bg-green-600";
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            } else {
+                 toast.className = baseClass + " bg-gray-900"; icon.innerHTML = '';
+            }
+            requestAnimationFrame(() => { toast.classList.remove('translate-y-[-150%]', 'opacity-0'); });
+            setTimeout(() => { toast.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3000);
+        }
+
+        async function publishAd() {
+            if(!currentSelection) return;
+            const text = document.getElementById('ad-text').value.trim();
+            const link = document.getElementById('ad-link').value.trim();
+            const fileInput = document.getElementById('ad-image');
+            
+            if (!text && fileInput.files.length === 0) {
+                showToast(t('msg_upload_req'), "error"); return;
+            }
+
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                closeModal('modal-content'); showToast(t('msg_unavail'), "error"); return;
+            }
+            
+            let imageUrl = null;
+            let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+            if (fileInput.files && fileInput.files[0]) {
+                try {
+                    imageUrl = await processImageFile(fileInput.files[0], rect.w * BLOCK_PX, rect.h * BLOCK_PX);
+                    await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => { cachedImages[imageUrl] = img; resolve(); };
+                        img.onerror = reject; img.src = imageUrl;
+                    });
+                } catch(e) {
+                    console.error(e); showToast(t('msg_img_fail'), "error"); imageUrl = null;
+                }
+            }
+
+            const adData = {
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h, text: text, link: link,
+                imageUrl: imageUrl, color: randomColor, owner: userId, timestamp: new Date().toISOString()
+            };
+
+            try {
+                if (userLoggedIn()) {
+                    const adsRef = collection(db, 'artifacts', appId, 'public', 'data', 'ads');
+                    await addDoc(adsRef, adData);
+                } else {
+                    ads.push(adData); calculateStats(); drawCanvas();
+                }
+                showToast(t('msg_pub_success'), "success");
+            } catch (err) {
+                console.error(err); showToast(t('msg_save_fail'), "error");
+            } finally {
+                closeModal('modal-content'); currentSelection = null; updateSelectionUI(); drawCanvas();
+            }
+        }
+
+        function processImageFile(file, targetWidth, targetHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const oc = document.createElement('canvas');
+                        oc.width = targetWidth; oc.height = targetHeight;
+                        const octx = oc.getContext('2d');
+                        octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
+                        octx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        resolve(oc.toDataURL('image/png'));
+                    };
+                    img.onerror = reject; img.src = e.target.result;
+                };
+                reader.onerror = reject; reader.readAsDataURL(file);
+            });
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
