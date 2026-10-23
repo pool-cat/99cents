@@ -14,7 +14,7 @@
     <!-- Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- PAYPAL SDK -->
+    <!-- PAYPAL SDK (Live/Sandbox Client ID Anda) -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
     <style>
@@ -33,7 +33,7 @@
         ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
-        #paypal-button-container { position: relative; z-index: 10; min-height: 120px; }
+        #paypal-button-container { position: relative; z-index: 10; min-height: 150px; width: 100%; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
@@ -188,17 +188,18 @@
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
             </div>
 
-            <!-- Kontainer Tombol PayPal / Fallback -->
-            <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col"></div>
+            <!-- Tombol PayPal Resmi -->
+            <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col mb-3"></div>
             
-            <!-- Tombol Lanjut Manual (Muncul otomatis jika SDK gagal/diblokir) -->
-            <div id="manual-checkout-container" class="w-full mt-3 hidden">
+            <!-- Tombol Backup Manual/Langsung (Muncul jika SDK PayPal terhalang) -->
+            <div id="manual-checkout-container" class="w-full mb-3 hidden">
                 <button id="btn-manual-success" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
                     Bayar via PayPal & Lanjut
                 </button>
             </div>
 
-            <div id="admin-bypass-container" class="w-full mt-3 hidden">
+            <!-- Tombol Bypass Admin -->
+            <div id="admin-bypass-container" class="w-full mt-2 hidden">
                 <button id="btn-bypass-payment" class="w-full py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
                     [Admin Mode] Lewati Pembayaran
                 </button>
@@ -279,7 +280,7 @@
                 btn_publish: "Pasang Iklan",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah terkonfirmasi oleh sistem, Anda akan diarahkan untuk mengunggah iklan.",
+                sim_note: "Selesaikan pembayaran melalui PayPal di bawah.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
                 msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi Sistem!",
@@ -313,7 +314,7 @@
                 btn_publish: "Publish Ad",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Complete your payment via PayPal below. Once confirmed by system, you will proceed to upload your ad.",
+                sim_note: "Complete your payment via PayPal below.",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
                 msg_pay_success: "Payment Successful & Confirmed!",
@@ -538,8 +539,6 @@
                 const manualContainer = document.getElementById('manual-checkout-container');
                 paypalContainer.innerHTML = ''; 
                 manualContainer.classList.add('hidden');
-
-                let paypalLoaded = false;
                 
                 if (window.paypal) {
                     try {
@@ -570,22 +569,22 @@
                                 console.error('PayPal Error:', err);
                                 manualContainer.classList.remove('hidden');
                             }
-                        }).render('#paypal-button-container').then(() => {
-                            paypalLoaded = true;
-                        }).catch(() => {
+                        }).render('#paypal-button-container').catch(() => {
                             manualContainer.classList.remove('hidden');
                         });
                     } catch (e) {
                         manualContainer.classList.remove('hidden');
                     }
+                } else {
+                    manualContainer.classList.remove('hidden');
                 }
 
-                // Fallback jika dalam 2 detik tombol PayPal gagal muncul
+                // Jika tombol PayPal gagal dimuat dalam 1.5 detik, tampilkan tombol backup otomatis
                 setTimeout(() => {
                     if (paypalContainer.children.length === 0) {
                         manualContainer.classList.remove('hidden');
                     }
-                }, 2000);
+                }, 1500);
 
                 const adminBypassContainer = document.getElementById('admin-bypass-container');
                 if (currentUser && (currentUser.role === 'admin' || currentUser.email === '99Cents Space')) {
