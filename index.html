@@ -7,47 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PAYPAL SDK: Menggunakan Client ID Anda dengan metode Smart Buttons (bukan hosted) -->
+    <!-- PAYPAL SDK -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAA4lFJw9tAZJGkXmoVULvmMaq1Km5NxcW5S4CDe2ublC7TFkprX4Lh8DFXPoHTzxk5WNaFVMungmERSvw&currency=USD"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Tampilan canvas retro pixel */
         canvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
-            background-color: white;
+            background-color: #ffffff;
         }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        #tooltip {
-            pointer-events: none;
-            transition: opacity 0.2s;
-        }
+        #tooltip { pointer-events: none; transition: opacity 0.2s; }
         
-        /* Fix z-index for PayPal iframe to ensure it's clickable */
-        #paypal-button-container {
-            position: relative;
-            z-index: 10;
-        }
+        #paypal-button-container { position: relative; z-index: 10; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
 
-    <!-- Sidebar / Control Panel (Responsive) -->
+    <!-- Sidebar / Control Panel -->
     <aside class="w-full md:w-80 bg-white shadow-xl flex flex-col z-20 shrink-0 h-[45vh] md:h-full relative overflow-y-auto">
         <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white z-30 shadow-sm">
             <div class="flex items-center gap-3">
-                <img src="99cents_logo.jpeg" alt="99cents Logo" class="h-10 w-auto object-contain rounded-md" onerror="this.src='https://via.placeholder.com/80x40?text=99cents'">
+                <img src="99cents_logo.jpeg" alt="Logo" class="h-10 w-auto object-contain rounded-md" onerror="this.style.display='none'">
                 <h1 class="text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
             </div>
             
-            <!-- Language Switcher -->
             <div class="flex items-center gap-2 cursor-pointer select-none" id="lang-toggle-container">
                 <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
                 <div class="relative w-10 h-5 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
@@ -62,7 +52,6 @@
         </div>
 
         <div class="p-5 flex-1 flex flex-col gap-5">
-            <!-- Status Papan -->
             <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <h2 class="font-semibold text-blue-800 text-sm mb-2" data-i18n="status_board">Status Papan</h2>
                 <div class="flex justify-between text-sm mb-1">
@@ -80,7 +69,6 @@
                 <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* 1 blok = 20x20 pixels.</p>
             </div>
 
-            <!-- Instruksi -->
             <div class="flex-1">
                 <h3 class="font-semibold text-gray-800 mb-2 text-sm" data-i18n="instruction">Instruksi:</h3>
                 <ol class="list-decimal pl-5 text-xs text-gray-600 space-y-1.5">
@@ -91,7 +79,6 @@
                 </ol>
             </div>
 
-            <!-- Info Pilihan -->
             <div id="selection-panel" class="bg-gray-50 border border-gray-200 rounded-lg p-4 opacity-50 transition-opacity mt-auto mb-2">
                 <h3 class="font-semibold text-gray-800 text-sm mb-3" data-i18n="your_selection">Area Pilihan Anda</h3>
                 <div class="flex justify-between text-sm mb-1">
@@ -109,11 +96,9 @@
         </div>
     </aside>
 
-    <!-- Canvas Area (Scrollable to accommodate huge 20,000 blocks grid) -->
+    <!-- Canvas Area -->
     <main class="flex-1 relative overflow-auto bg-gray-300 h-[55vh] md:h-full z-10" id="canvas-container">
-        <!-- Flex wrapper ensures canvas stays centered if screen is larger than canvas -->
         <div class="w-max h-max p-10 min-w-full min-h-full flex items-center justify-center">
-            <!-- Canvas is 4000x2000 (200x100 grid @ 20px per block) -->
             <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair"></canvas>
         </div>
 
@@ -131,7 +116,6 @@
                 <button onclick="closeModal('modal-payment')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             
-            <!-- Harga Otomatis -->
             <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Tagihan</p>
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
@@ -141,8 +125,13 @@
                 Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda akan diarahkan untuk mengisi konten iklan.
             </div>
 
-            <!-- TEMPAT RENDER TOMBOL PAYPAL -->
+            <!-- Area Render Tombol PayPal -->
             <div id="paypal-button-container" class="w-full min-h-[150px]"></div>
+            
+            <!-- Tombol Bypass untuk Testing UI (Dev Mode) -->
+            <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
+                [Dev Mode] Lewati Pembayaran untuk Test UI
+            </button>
         </div>
     </div>
 
@@ -181,9 +170,8 @@
         <span id="toast-msg" class="text-sm font-medium">Message</span>
     </div>
 
-    <!-- Script / Logic -->
+    <!-- SCRIPT UTAMA -->
     <script>
-        // --- TRANSLATION DATA ---
         const i18nData = {
             id: {
                 subtitle: "Beli ruang pixel untuk iklan Anda secara permanen.",
@@ -299,29 +287,26 @@
             applyLanguage();
         });
 
-        // --- CORE GRID CONFIG ---
-        // Canvas dimension: 4000x2000 (To fit 20,000 blocks at 20x20px each)
+        // Config 20.000 Blocks
         const GRID_COLS = 200; 
         const GRID_ROWS = 100;
-        const BLOCK_PX = 20; // 20px
-        const CANVAS_WIDTH = GRID_COLS * BLOCK_PX; // 4000
-        const CANVAS_HEIGHT = GRID_ROWS * BLOCK_PX; // 2000
-        const PRICE_PER_BLOCK = 0.99; // $0.99 
+        const BLOCK_PX = 20; 
+        const CANVAS_WIDTH = GRID_COLS * BLOCK_PX; 
+        const CANVAS_HEIGHT = GRID_ROWS * BLOCK_PX; 
+        const PRICE_PER_BLOCK = 0.99; 
 
-        // Variables for Global State
+        // States
         let ads = [];
         let isDragging = false;
         let currentSelection = null;
         let hoverGridPos = { x: -1, y: -1 };
         let cachedImages = {}; 
-        
-        // PAYPAL DYNAMIC VARIABLES
         let currentTotalPrice = 0.00;
         let currentTotalBlocks = 0;
 
         // Elements
         const canvas = document.getElementById('gridCanvas');
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const ctx = canvas.getContext('2d'); 
         const selectionPanel = document.getElementById('selection-panel');
         const selSizeText = document.getElementById('sel-size');
         const selPriceText = document.getElementById('sel-price');
@@ -336,29 +321,30 @@
         const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
 
         function init() {
-            applyLanguage();
-            calculateStats(); 
-            drawCanvas();
-            setupCanvasEvents(); 
-            setupUIEvents();
-            initPayPalButton();
+            try {
+                applyLanguage();
+                calculateStats(); 
+                drawCanvas();
+                setupCanvasEvents(); 
+                setupUIEvents();
+                initPayPalButton();
+            } catch (err) {
+                console.error("Kesalahan saat memuat aplikasi:", err);
+            }
         }
 
-        // --- PAYPAL INTEGRATION (Smart Buttons) ---
+        // PAYPAL Smart Buttons
         function initPayPalButton() {
             if (window.paypal) {
                 paypal.Buttons({
                     style: {
-                        shape: 'rect',
-                        color: 'gold',
-                        layout: 'vertical',
-                        label: 'checkout',
+                        shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout',
                     },
-                    // Mengambil nilai currentTotalPrice setiap kali tombol diklik
                     createOrder: function(data, actions) {
                         return actions.order.create({
                             purchase_units: [{
                                 amount: {
+                                    currency_code: 'USD',
                                     value: currentTotalPrice.toFixed(2)
                                 },
                                 description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
@@ -366,34 +352,38 @@
                         });
                     },
                     onApprove: function(data, actions) {
-                        // Jika pembayaran berhasil
                         return actions.order.capture().then(function(details) {
                             closeModal('modal-payment');
                             showToast(t('msg_pay_success'), "success");
-                            
-                            // Reset isi inputan
                             document.getElementById('ad-image').value = '';
                             document.getElementById('ad-text').value = '';
                             document.getElementById('ad-link').value = '';
-                            
-                            // Tampilkan modal unggah gambar iklan
                             setTimeout(() => openModal('modal-content'), 500);
+                        }).catch(err => {
+                            console.error('Error saat capture PayPal:', err);
+                            showToast("Gagal memproses pembayaran Anda.", "error");
                         });
                     },
+                    onCancel: function (data) {
+                        // Jika user menutup popup secara sengaja
+                        console.warn("PayPal Checkout Dibatalkan oleh Pengguna.");
+                        showToast("Pembayaran dibatalkan / ditutup.", "info");
+                    },
                     onError: function(err) {
-                        console.error('PayPal Checkout Error:', err);
-                        showToast("Pembayaran Error / Dibatalkan.", "error");
+                        // Jika ada kesalahan server PayPal atau API ditolak
+                        console.error('PayPal Checkout API Error:', err);
+                        showToast("Transaksi ditolak PayPal. (Cek akun penerima/pengirim)", "error");
                     }
                 }).render('#paypal-button-container');
             } else {
-                console.error("PayPal SDK not loaded.");
+                console.warn("Script PayPal gagal dimuat.");
             }
         }
 
         function calculateStats() {
             let soldBlocks = 0;
             ads.forEach(ad => { soldBlocks += (ad.w * ad.h); });
-            const totalBlocks = GRID_COLS * GRID_ROWS; // 20.000
+            const totalBlocks = GRID_COLS * GRID_ROWS; 
             const availBlocks = totalBlocks - soldBlocks;
             const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
 
@@ -405,7 +395,6 @@
             ctx.fillStyle = "#ffffff"; 
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Draw Grid Lines (light gray)
             ctx.strokeStyle = "#e5e7eb";
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -417,7 +406,6 @@
             }
             ctx.stroke();
 
-            // Draw published Ads
             ads.forEach(ad => {
                 const pxX = ad.x * BLOCK_PX, pxY = ad.y * BLOCK_PX;
                 const pxW = ad.w * BLOCK_PX, pxH = ad.h * BLOCK_PX;
@@ -438,7 +426,6 @@
                 ctx.strokeRect(pxX, pxY, pxW, pxH);
             });
 
-            // Draw Current Selection Drag
             if (currentSelection) {
                 const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
                 const pxX = rect.x * BLOCK_PX, pxY = rect.y * BLOCK_PX;
@@ -455,7 +442,6 @@
 
         function getGridCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            // Kalkulasi memperhitungkan scale jika layar zoom/scroll
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             let x = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_WIDTH - 0.1));
@@ -547,10 +533,9 @@
             
             const blocks = rect.w * rect.h;
             currentTotalBlocks = blocks;
-            currentTotalPrice = blocks * PRICE_PER_BLOCK; // Sync untuk PayPal API
+            currentTotalPrice = blocks * PRICE_PER_BLOCK; 
             
             const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
-
             selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${(blocks * BLOCK_PX * BLOCK_PX).toLocaleString(numFmt)} px)`;
             selPriceText.innerText = formatCurrency(currentTotalPrice);
             paymentAmountText.innerText = formatCurrency(currentTotalPrice);
@@ -563,15 +548,23 @@
                 if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
                      showToast(t('msg_empty'), "error"); return;
                 }
-                // Update text pada modal pembayaran
                 paymentAmountText.innerText = formatCurrency(currentTotalPrice);
                 openModal('modal-payment');
             });
 
             document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
+
+            // LOGIKA TOMBOL BYPASS UNTUK TESTING UI KETIKA PAYPAL SEDANG ERROR
+            document.getElementById('btn-bypass-payment').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast("Pembayaran dilewati (Mode Developer)", "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 500);
+            });
         }
 
-        // Modals Controller
         window.openModal = (id) => {
             const modal = document.getElementById(id);
             const inner = modal.querySelector('div');
@@ -586,7 +579,6 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         };
 
-        // Toast Notification
         function showToast(message, type="info") {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toast-icon');
@@ -599,11 +591,14 @@
             } else if(type === "success") {
                 toast.className = baseClass + " bg-green-600";
                 icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            } else if(type === "info") {
+                 toast.className = baseClass + " bg-gray-700"; 
+                 icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
             } else {
                  toast.className = baseClass + " bg-gray-900"; icon.innerHTML = '';
             }
             requestAnimationFrame(() => { toast.classList.remove('translate-y-[-150%]', 'opacity-0'); });
-            setTimeout(() => { toast.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3000);
+            setTimeout(() => { toast.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3500);
         }
 
         async function publishAd() {
@@ -667,7 +662,6 @@
             });
         }
 
-        // Initialize App
         window.addEventListener('load', init);
     </script>
 </body>
