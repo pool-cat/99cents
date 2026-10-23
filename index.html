@@ -15,16 +15,16 @@
         canvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
-            background-color: #ffffff; /* Proteksi layar hitam */
+            background-color: #ffffff;
         }
         
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        /* Modifikasi Scrollbar agar lebih nyaman saat menggeser map raksasa */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
-        
         #paypal-button-container { position: relative; z-index: 10; min-height: 150px; }
     </style>
 </head>
@@ -98,8 +98,10 @@
 
     <!-- Canvas Area -->
     <main class="flex-1 relative overflow-auto bg-gray-300 h-[55vh] md:h-full z-10" id="canvas-container">
+        <!-- PENTING: Tambahkan margin agar canvas bisa di-scroll dengan nyaman -->
         <div class="w-max h-max p-10 min-w-full min-h-full flex items-center justify-center">
-            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair"></canvas>
+            <!-- PENTING: Class 'max-w-none' menolak paksaan penyusutan layar dari Tailwind, menjaga 1px grid tetap tajam -->
+            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair max-w-none bg-white rounded-sm"></canvas>
         </div>
 
         <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
@@ -344,7 +346,8 @@
             ctx.fillStyle = "#ffffff"; 
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            ctx.strokeStyle = "#e5e7eb";
+            // Garis Grid dipertegas menjadi Abu-abu (#d1d5db / Tailwind gray-300) agar lebih jelas
+            ctx.strokeStyle = "#d1d5db";
             ctx.lineWidth = 1;
             ctx.beginPath();
             for (let i = 0; i <= CANVAS_WIDTH; i += BLOCK_PX) {
@@ -376,119 +379,4 @@
             });
 
             if (currentSelection) {
-                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
-                const pxX = rect.x * BLOCK_PX, pxY = rect.y * BLOCK_PX;
-                const pxW = rect.w * BLOCK_PX, pxH = rect.h * BLOCK_PX;
-
-                const isValid = isAreaFree(rect.x, rect.y, rect.w, rect.h);
-                ctx.fillStyle = isValid ? "rgba(59, 130, 246, 0.45)" : "rgba(239, 68, 68, 0.45)";
-                ctx.fillRect(pxX, pxY, pxW, pxH);
-                ctx.strokeStyle = isValid ? "#2563eb" : "#dc2626";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(pxX, pxY, pxW, pxH);
-            }
-        }
-
-        function getGridCoords(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let x = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_WIDTH - 0.1));
-            let y = Math.max(0, Math.min((clientY - rect.top) * scaleY, CANVAS_HEIGHT - 0.1));
-            return { x: Math.floor(x / BLOCK_PX), y: Math.floor(y / BLOCK_PX) };
-        }
-
-        function getSelectionRect(startX, startY, endX, endY) {
-            const minX = Math.min(startX, endX), minY = Math.min(startY, endY);
-            return { x: minX, y: minY, w: Math.max(startX, endX) - minX + 1, h: Math.max(startY, endY) - minY + 1 };
-        }
-
-        function isAreaFree(x, y, w, h) {
-            return !ads.some(ad => (x < ad.x + ad.w && x + w > ad.x && y < ad.y + ad.h && y + h > ad.y));
-        }
-
-        function setupCanvasEvents() {
-            canvas.addEventListener('mousedown', (e) => {
-                if(e.button !== 0) return;
-                const coords = getGridCoords(e.clientX, e.clientY);
-                isDragging = true;
-                currentSelection = { startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y };
-                drawCanvas();
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (e.target === canvas && !isDragging) {
-                    const coords = getGridCoords(e.clientX, e.clientY);
-                    if(coords.x !== hoverGridPos.x || coords.y !== hoverGridPos.y) {
-                        hoverGridPos = coords;
-                        const hoveredAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
-                        if (hoveredAd && (hoveredAd.text || hoveredAd.link)) {
-                            tooltip.style.opacity = '1';
-                            tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
-                            tooltipText.innerText = hoveredAd.text || "Pixel Ad";
-                            tooltipLink.innerText = hoveredAd.link ? t('tooltip_link') : "";
-                            canvas.style.cursor = "pointer";
-                        } else {
-                            tooltip.style.opacity = '0'; canvas.style.cursor = "crosshair";
-                        }
-                    } else if (tooltip.style.opacity === '1') {
-                        tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
-                    }
-                } else { tooltip.style.opacity = '0'; }
-
-                if (isDragging) {
-                    const coords = getGridCoords(e.clientX, e.clientY);
-                    currentSelection.endX = coords.x; currentSelection.endY = coords.y;
-                    drawCanvas(); updateSelectionUI();
-                }
-            });
-
-            window.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
-                    if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
-                        showToast(t('msg_collision'), "error");
-                        if (btnInitPayment) btnInitPayment.disabled = true;
-                    } else {
-                        if (btnInitPayment) btnInitPayment.disabled = false;
-                    }
-                    updateSelectionUI();
-                }
-            });
-            
-            canvas.addEventListener('click', (e) => {
-                if (currentSelection && (currentSelection.startX !== currentSelection.endX || currentSelection.startY !== currentSelection.endY)) return;
-                const coords = getGridCoords(e.clientX, e.clientY);
-                const clickedAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
-                if (clickedAd && clickedAd.link) {
-                    let url = clickedAd.link;
-                    if(!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
-                    window.open(url, '_blank');
-                }
-            });
-        }
-
-        function updateSelectionUI() {
-            if (!currentSelection) {
-                selectionPanel.classList.add('opacity-50');
-                if (btnInitPayment) btnInitPayment.disabled = true;
-                selSizeText.innerText = `0 x 0 ${t('blocks')}`;
-                selPriceText.innerText = formatCurrency(0);
-                return;
-            }
-            selectionPanel.classList.remove('opacity-50');
-            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
-            
-            const blocks = rect.w * rect.h;
-            currentTotalBlocks = blocks;
-            currentTotalPrice = blocks * PRICE_PER_BLOCK; 
-            
-            const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
-            selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${(blocks * BLOCK_PX * BLOCK_PX).toLocaleString(numFmt)} px)`;
-            selPriceText.innerText = formatCurrency(currentTotalPrice);
-            paymentAmountText.innerText = formatCurrency(currentTotalPrice);
-        }
-
-        function setupUIEvents() {
-            document.getElementById('btn-init-payment').addEventListener('click', ()
+                const rect =
