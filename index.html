@@ -1,6 +1,193 @@
-<!-- Script / Logic -->
-    <script>
-        // --- TRANSLATION DATA ---
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Ads - Beli Ruang Iklan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PayPal SDK Dynamic Buttons -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA4lFJw9tAZJGkXmoVULvmMaq1Km5NxcW5S4CDe2ublC7TFkprX4Lh8DFXPoHTzxk5WNaFVMungmERSvw&components=buttons&disable-funding=venmo&currency=USD"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        canvas {
+            image-rendering: pixelated; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #tooltip {
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar / Control Panel -->
+    <aside class="w-full md:w-80 bg-white shadow-xl flex flex-col z-10 shrink-0 h-auto md:h-full relative overflow-y-auto">
+        <div class="p-4 sm:p-5 border-b flex justify-between items-center sticky top-0 bg-white z-20 shadow-sm">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <img src="https://placehold.co/120x60/0a2540/ffffff?text=99cents" alt="99cents Logo" class="h-[40px] sm:h-[50px] w-auto object-contain rounded-md" onerror="this.src='https://placehold.co/120x60/0a2540/ffffff?text=99cents'">
+                <h1 class="text-lg sm:text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
+            </div>
+            
+            <div class="flex items-center gap-2 cursor-pointer select-none" id="lang-toggle-container">
+                <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
+                <div class="relative w-10 h-5 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
+                    <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0" id="switch-knob"></div>
+                </div>
+                <span class="text-xs font-bold text-gray-400 transition-colors" id="lbl-en">EN</span>
+            </div>
+        </div>
+        <div class="px-4 sm:px-5 py-3 border-b bg-gray-50">
+            <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda secara permanen.</p>
+        </div>
+
+        <div class="p-4 sm:p-6 flex-1 flex flex-col">
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <h2 class="font-semibold text-blue-800 text-sm mb-2" data-i18n="status_board">Status Papan</h2>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="sold">Terjual:</span>
+                    <span class="font-medium text-gray-900" id="stats-sold">0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="available">Tersedia:</span>
+                    <span class="font-medium text-gray-900" id="stats-available">20.000 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mt-2 pt-2 border-t border-blue-200">
+                    <span class="text-gray-600" data-i18n="price_per_block">Harga per Blok:</span>
+                    <span class="font-bold text-green-600">$0.99</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* 1 blok = 20x20 pixels (400px).</p>
+            </div>
+
+            <div class="mb-4 flex-1">
+                <h3 class="font-semibold text-gray-800 mb-2 text-sm sm:text-base" data-i18n="instruction">Instruksi:</h3>
+                <ol class="list-decimal pl-5 text-xs sm:text-sm text-gray-600 space-y-2">
+                    <li data-i18n="inst_1">Arahkan kursor ke papan di sebelah kanan.</li>
+                    <li><strong data-i18n="inst_2_bold">Klik dan seret (drag)</strong> <span data-i18n="inst_2">untuk menyeleksi area kotak (pixel) yang ingin Anda beli.</span></li>
+                    <li data-i18n="inst_3">Pastikan area tidak menabrak iklan lain.</li>
+                    <li data-i18n="inst_4">Selesaikan pembayaran, lalu isi konten iklan.</li>
+                </ol>
+            </div>
+
+            <!-- Selection Info -->
+            <div id="selection-panel" class="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 opacity-50 transition-opacity">
+                <h3 class="font-semibold text-gray-800 text-sm mb-3" data-i18n="your_selection">Area Pilihan Anda</h3>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="size">Ukuran:</span>
+                    <span class="font-medium text-gray-900" id="sel-size">0 x 0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-3">
+                    <span class="text-gray-600" data-i18n="total_price">Total Harga:</span>
+                    <span class="font-bold text-blue-600 text-lg" id="sel-price">$0.00</span>
+                </div>
+                <button id="btn-init-payment" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm sm:text-base shadow-sm" data-i18n="proceed_payment">
+                    Lanjut ke Pembayaran
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Canvas Area -->
+    <main class="flex-1 relative overflow-auto flex bg-gray-200 min-h-[400px] md:min-h-0" id="canvas-container">
+        <div class="m-auto p-4 sm:p-8 flex items-center justify-center min-w-max min-h-max">
+            <!-- 200 cols x 100 rows * 20px = 4000x2000px canvas -->
+            <canvas id="gridCanvas" width="4000" height="2000" class="bg-white rounded-sm cursor-crosshair touch-none"></canvas>
+        </div>
+
+        <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
+            <p id="tooltip-text" class="font-semibold">Text</p>
+            <p id="tooltip-link" class="text-blue-300">Link</p>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- 1. Modal Setup Content -->
+    <div id="modal-content" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-5 sm:p-6 transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 sm:mb-5">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800" data-i18n="ad_details">Detail Iklan Anda</h2>
+                <button onclick="closeModal('modal-content')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1" data-i18n="upload_img">Unggah Gambar (Sesuai Ukuran)</label>
+                    <input type="file" id="ad-image" accept="image/png, image/jpeg, image/gif" class="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
+                    <p class="text-[11px] sm:text-xs text-gray-500 mt-1" data-i18n="img_note">Gambar akan dire-size sesuai proporsi area yang dipilih.</p>
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1" data-i18n="ad_text">Teks/Judul Iklan (Muncul saat dihover)</label>
+                    <input type="text" id="ad-text" data-i18n-ph="ad_text_ph" placeholder="Cth: Sewa Mobil Jakarta" class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1" data-i18n="ad_link">Tautan Web (Opsional)</label>
+                    <input type="url" id="ad-link" data-i18n-ph="ad_link_ph" placeholder="https://www.websiteanda.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="pt-4 flex justify-end gap-2">
+                    <button onclick="closeModal('modal-content')" class="px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg" data-i18n="btn_cancel">Batal</button>
+                    <button id="btn-publish-ad" class="px-4 py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg" data-i18n="btn_publish">Publikasikan Iklan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Modal PayPal Checkout -->
+    <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 sm:p-6 text-center transform scale-95 transition-transform duration-300 relative overflow-hidden max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-base sm:text-lg font-bold text-gray-800" data-i18n="secure_checkout">Secure Checkout</h2>
+                <button onclick="closeModal('modal-payment')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-3 mb-4 text-left border border-gray-100">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
+                <p class="text-xl font-bold text-gray-900" id="payment-amount">$0.00</p>
+            </div>
+
+            <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-4 text-left" data-i18n="sim_note">
+                Complete payment via PayPal below. Once successful, you will proceed to upload your ad.
+            </div>
+
+            <!-- PayPal Hosted Buttons Container -->
+            <div id="paypal-container-YX36MXYU9QK4G" class="mb-4"></div>
+
+            <button id="btn-simulate-success" class="w-full mt-2 py-2 text-xs text-gray-500 hover:text-gray-800 underline">
+                [Simulasi Pembayaran Berhasil]
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[60] bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 translate-y-[-150%] opacity-0 max-w-[90%] text-center">
+        <span id="toast-icon"></span>
+        <span id="toast-msg" class="text-xs sm:text-sm font-medium">Message</span>
+    </div>
+
+    <!-- Script / Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Translation Dictionary
         const i18nData = {
             id: {
                 subtitle: "Beli ruang pixel untuk iklan Anda secara permanen.",
@@ -8,37 +195,39 @@
                 sold: "Terjual:",
                 available: "Tersedia:",
                 price_per_block: "Harga per Blok:",
-                note_block: "* 1 blok = 20x20 pixels.",
+                note_block: "* 1 blok = 20x20 pixels (400px).",
                 instruction: "Instruksi:",
-                inst_1: "Geser kursor di area papan/canvas.",
-                inst_2_bold: "Klik & seret (drag)",
-                inst_2: "untuk memilih area.",
-                inst_3: "Pastikan area bebas (tidak menabrak iklan lain).",
-                inst_4: "Checkout pembayaran lalu pasang gambar Anda.",
+                inst_1: "Arahkan kursor / sentuh papan di sebelah kanan.",
+                inst_2_bold: "Klik dan seret (drag)",
+                inst_2: "untuk menyeleksi area kotak (pixel) yang ingin Anda beli.",
+                inst_3: "Pastikan area tidak menabrak iklan lain.",
+                inst_4: "Selesaikan pembayaran, lalu isi konten iklan.",
                 your_selection: "Area Pilihan Anda",
                 size: "Ukuran:",
                 total_price: "Total Harga:",
                 proceed_payment: "Lanjut ke Pembayaran",
                 ad_details: "Detail Iklan Anda",
-                upload_img: "Unggah Gambar Iklan",
-                ad_text: "Teks/Judul Iklan (Muncul saat kursor diarahkan)",
+                upload_img: "Unggah Gambar (Sesuai Ukuran)",
+                img_note: "Gambar akan dire-size sesuai proporsi area yang dipilih.",
+                ad_text: "Teks/Judul Iklan (Muncul saat dihover)",
                 ad_text_ph: "Cth: Sewa Mobil Jakarta",
-                ad_link: "Tautan Web URL (Opsional)",
+                ad_link: "Tautan Web (Opsional)",
                 ad_link_ph: "https://www.websiteanda.com",
                 btn_cancel: "Batal",
-                btn_publish: "Pasang Iklan",
+                btn_publish: "Publikasikan Iklan",
                 secure_checkout: "Checkout Aman",
                 total_due: "Total Tagihan",
-                sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda otomatis diarahkan untuk mengisi konten iklan.",
+                sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda akan diarahkan untuk mengisi konten iklan.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
                 msg_pay_success: "Pembayaran Berhasil! Silakan unggah gambar Anda.",
+                msg_pay_error: "Terjadi kesalahan pada sistem pembayaran.",
+                msg_pay_cancel: "Pembayaran dibatalkan.",
                 msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
                 msg_pub_success: "Iklan berhasil dipublikasikan!",
+                msg_save_fail: "Gagal menyimpan iklan ke server.",
                 blocks: "blok",
-                tooltip_link: "Klik untuk mengunjungi link",
-                msg_cancel: "Pembayaran dibatalkan oleh pengguna.",
-                msg_err: "PayPal Error. Cek console atau akun Anda."
+                tooltip_link: "Klik untuk mengunjungi link"
             },
             en: {
                 subtitle: "Buy pixel space for your ad permanently.",
@@ -46,37 +235,39 @@
                 sold: "Sold:",
                 available: "Available:",
                 price_per_block: "Price per Block:",
-                note_block: "* 1 block = 20x20 pixels.",
+                note_block: "* 1 block = 20x20 pixels (400px).",
                 instruction: "Instructions:",
-                inst_1: "Hover over the canvas area.",
-                inst_2_bold: "Click & drag",
-                inst_2: "to select your area.",
-                inst_3: "Ensure it doesn't overlap existing ads.",
-                inst_4: "Checkout and upload your image.",
-                your_selection: "Your Selection",
+                inst_1: "Hover or touch the board on the right.",
+                inst_2_bold: "Click and drag",
+                inst_2: "to select the pixel area you want to buy.",
+                inst_3: "Ensure the area doesn't overlap with other ads.",
+                inst_4: "Complete the payment, then fill in the ad content.",
+                your_selection: "Your Selected Area",
                 size: "Size:",
                 total_price: "Total Price:",
                 proceed_payment: "Proceed to Payment",
-                ad_details: "Ad Details",
-                upload_img: "Upload Ad Image",
-                ad_text: "Ad Text/Title (Hover text)",
+                ad_details: "Your Ad Details",
+                upload_img: "Upload Image (Fits Size)",
+                img_note: "Image will be resized proportionally to the selected area.",
+                ad_text: "Ad Text/Title (Shows on hover)",
                 ad_text_ph: "Ex: Buy my awesome product",
-                ad_link: "Web URL Link (Optional)",
+                ad_link: "Web Link (Optional)",
                 ad_link_ph: "https://www.yourwebsite.com",
                 btn_cancel: "Cancel",
                 btn_publish: "Publish Ad",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Complete your payment via PayPal below. Once successful, you will automatically proceed to upload your ad.",
+                sim_note: "Complete payment via PayPal below. Once successful, you will proceed to upload your ad content.",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
                 msg_pay_success: "Payment Successful! Please upload your image.",
+                msg_pay_error: "An error occurred with the payment system.",
+                msg_pay_cancel: "Payment was cancelled.",
                 msg_upload_req: "Please upload an image or enter text.",
                 msg_pub_success: "Ad successfully published!",
+                msg_save_fail: "Failed to save ad to server.",
                 blocks: "blocks",
-                tooltip_link: "Click to visit link",
-                msg_cancel: "Payment was cancelled by the user.",
-                msg_err: "PayPal Error. Check console or your account."
+                tooltip_link: "Click to visit link"
             }
         };
 
@@ -99,7 +290,7 @@
             const lblEn = document.getElementById('lbl-en');
             
             if (switchBg) {
-                if (currentLang === 'en') {
+                 if (currentLang === 'en') {
                     switchBg.classList.replace('bg-gray-300', 'bg-blue-600');
                     switchKnob.classList.replace('translate-x-0', 'translate-x-5');
                     lblEn.classList.replace('text-gray-400', 'text-gray-800');
@@ -111,6 +302,7 @@
                     lblEn.classList.replace('text-gray-800', 'text-gray-400');
                 }
             }
+
             calculateStats();
             updateSelectionUI();
         }
@@ -120,49 +312,40 @@
             applyLanguage();
         });
 
-        // --- CORE GRID CONFIG ---
-        const GRID_COLS = 200; 
+        // Constants (200 cols x 100 rows = 20,000 blocks; block size = 20px)
+        const CANVAS_WIDTH = 4000;
+        const CANVAS_HEIGHT = 2000;
+        const GRID_COLS = 200;
         const GRID_ROWS = 100;
-        const BLOCK_PX = 20; // 20px
-        const CANVAS_WIDTH = GRID_COLS * BLOCK_PX; 
-        const CANVAS_HEIGHT = GRID_ROWS * BLOCK_PX; 
+        const BLOCK_PX = 20; 
         const PRICE_PER_BLOCK = 0.99; 
 
-        // Variables for Global State
-        let ads = [];
-        let isDragging = false;
-        let currentSelection = null;
-        let hoverGridPos = { x: -1, y: -1 };
-        let cachedImages = {}; 
+        // Environment Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'pixel-ads-dummy';
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        let firebaseConfig;
         
-        let currentTotalPrice = 0.00;
-        let currentTotalBlocks = 0;
+        try { firebaseConfig = JSON.parse(firebaseConfigStr); } 
+        catch(e) { firebaseConfig = { projectId: "dummy" }; }
 
-        // Elements
+        let app, db, auth, userId = null;
+        let ads = [];
+        let isFirebaseActive = Object.keys(firebaseConfig).length > 1;
+
+        // UI Elements
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d', { alpha: false });
+        
         const selectionPanel = document.getElementById('selection-panel');
         const selSizeText = document.getElementById('sel-size');
         const selPriceText = document.getElementById('sel-price');
         const btnInitPayment = document.getElementById('btn-init-payment');
         const statsSold = document.getElementById('stats-sold');
         const statsAvail = document.getElementById('stats-available');
+        
         const tooltip = document.getElementById('tooltip');
         const tooltipText = document.getElementById('tooltip-text');
         const tooltipLink = document.getElementById('tooltip-link');
-        const paymentAmountText = document.getElementById('payment-amount');
-
-        const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-
-        function init() {
-            applyLanguage();
-            calculateStats(); 
-            drawCanvas();
-            setupCanvasEvents(); 
-            setupUIEvents();
-            initPayPalButton();
-        }
-
         // --- PAYPAL INTEGRATION (Smart Buttons) ---
         function initPayPalButton() {
             if (window.paypal) {
@@ -173,41 +356,47 @@
                         layout: 'vertical',
                         label: 'checkout',
                     },
+                    // Mengambil nilai currentTotalPrice setiap kali tombol diklik
                     createOrder: function(data, actions) {
-                        // Pastikan harga formatnya valid sebelum dilempar ke PayPal
-                        const finalPrice = currentTotalPrice.toFixed(2);
-                        
+                        console.log("Creating PayPal order for amount: $" + currentTotalPrice.toFixed(2) + " USD");
                         return actions.order.create({
                             purchase_units: [{
-                                description: `Pixel Ads Space - ${currentTotalBlocks} blocks`,
                                 amount: {
-                                    currency_code: "USD", // Mewajibkan deklarasi kurs
-                                    value: finalPrice
-                                }
+                                    currency_code: 'USD',
+                                    value: currentTotalPrice.toFixed(2)
+                                },
+                                description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
                             }]
                         });
                     },
                     onApprove: function(data, actions) {
+                        // Jika pembayaran berhasil
                         return actions.order.capture().then(function(details) {
+                            console.log("PayPal payment successful:", details);
                             closeModal('modal-payment');
                             showToast(t('msg_pay_success'), "success");
                             
-                            // Reset form
+                            // Reset isi inputan
                             document.getElementById('ad-image').value = '';
                             document.getElementById('ad-text').value = '';
                             document.getElementById('ad-link').value = '';
                             
+                            // Tampilkan modal unggah gambar iklan
                             setTimeout(() => openModal('modal-content'), 500);
+                        }).catch(function(err) {
+                            console.error("PayPal Capture Error:", err);
+                            showToast(t('msg_pay_error'), "error");
                         });
                     },
                     onCancel: function(data) {
-                        // Menangani jika user menekan tombol [X] atau keluar dari popup PayPal
-                        showToast(t('msg_cancel'), "info");
+                        // Jika pengguna menutup jendela PayPal sebelum membayar
+                        console.log("PayPal Checkout Cancelled:", data);
+                        showToast(t('msg_pay_cancel'), "info");
                     },
                     onError: function(err) {
-                        // Log detail error ke browser developer tools (F12 > Console)
-                        console.error('Detail Error PayPal:', err);
-                        showToast(t('msg_err'), "error");
+                        // Jika terjadi error pada sistem koneksi PayPal
+                        console.error('PayPal Checkout Error:', err);
+                        showToast(t('msg_pay_error'), "error");
                     }
                 }).render('#paypal-button-container');
             } else {
@@ -218,7 +407,7 @@
         function calculateStats() {
             let soldBlocks = 0;
             ads.forEach(ad => { soldBlocks += (ad.w * ad.h); });
-            const totalBlocks = GRID_COLS * GRID_ROWS; 
+            const totalBlocks = GRID_COLS * GRID_ROWS; // 20.000
             const availBlocks = totalBlocks - soldBlocks;
             const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
 
@@ -226,35 +415,40 @@
             statsAvail.innerText = `${availBlocks.toLocaleString(numFmt)} ${t('blocks')}`;
         }
 
+        function userLoggedIn() { return isFirebaseActive && userId; }
+
         function drawCanvas() {
-            ctx.fillStyle = "#ffffff"; 
+            ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            ctx.strokeStyle = "#e5e7eb";
+            ctx.strokeStyle = "#f3f4f6";
             ctx.lineWidth = 1;
             ctx.beginPath();
             for (let i = 0; i <= CANVAS_WIDTH; i += BLOCK_PX) {
                 ctx.moveTo(i, 0); ctx.lineTo(i, CANVAS_HEIGHT);
             }
-            for (let i = 0; i <= CANVAS_HEIGHT; i += BLOCK_PX) {
-                ctx.moveTo(0, i); ctx.lineTo(CANVAS_WIDTH, i);
+            for (let j = 0; j <= CANVAS_HEIGHT; j += BLOCK_PX) {
+                ctx.moveTo(0, j); ctx.lineTo(CANVAS_WIDTH, j);
             }
             ctx.stroke();
 
             ads.forEach(ad => {
-                const pxX = ad.x * BLOCK_PX, pxY = ad.y * BLOCK_PX;
-                const pxW = ad.w * BLOCK_PX, pxH = ad.h * BLOCK_PX;
+                const pxX = ad.x * BLOCK_PX;
+                const pxY = ad.y * BLOCK_PX;
+                const pxW = ad.w * BLOCK_PX;
+                const pxH = ad.h * BLOCK_PX;
 
-                if (ad.imageUrl && cachedImages[ad.imageUrl]) {
+                if (ad.imageUrl && cachedImages[ad.imageUrl] && cachedImages[ad.imageUrl].complete) {
                     ctx.drawImage(cachedImages[ad.imageUrl], pxX, pxY, pxW, pxH);
                 } else {
                     ctx.fillStyle = ad.color || '#3b82f6';
                     ctx.fillRect(pxX, pxY, pxW, pxH);
-                    if (pxW >= 40 && pxH >= 20 && ad.text) {
+                    
+                    if (pxW >= 30 && pxH >= 20 && ad.text) {
                         ctx.fillStyle = "#ffffff";
-                        ctx.font = "bold 14px Inter, sans-serif";
+                        ctx.font = "bold 12px Inter, sans-serif";
                         ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                        ctx.fillText(ad.text.substring(0, Math.floor(pxW / 8)), pxX + pxW / 2, pxY + pxH / 2);
+                        ctx.fillText(ad.text.substring(0, Math.floor(pxW / 7)), pxX + pxW / 2, pxY + pxH / 2);
                     }
                 }
                 ctx.strokeStyle = "rgba(0,0,0,0.15)";
@@ -269,6 +463,7 @@
                 const isValid = isAreaFree(rect.x, rect.y, rect.w, rect.h);
                 ctx.fillStyle = isValid ? "rgba(59, 130, 246, 0.45)" : "rgba(239, 68, 68, 0.45)";
                 ctx.fillRect(pxX, pxY, pxW, pxH);
+                
                 ctx.strokeStyle = isValid ? "#2563eb" : "#dc2626";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(pxX, pxY, pxW, pxH);
@@ -277,8 +472,7 @@
 
         function getGridCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+            const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
             let x = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_WIDTH - 0.1));
             let y = Math.max(0, Math.min((clientY - rect.top) * scaleY, CANVAS_HEIGHT - 0.1));
             return { x: Math.floor(x / BLOCK_PX), y: Math.floor(y / BLOCK_PX) };
@@ -294,6 +488,13 @@
         }
 
         function setupCanvasEvents() {
+            const getEventCoords = (e) => {
+                if (e.touches && e.touches.length > 0) {
+                    return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+                }
+                return { clientX: e.clientX, clientY: e.clientY };
+            };
+
             canvas.addEventListener('mousedown', (e) => {
                 if(e.button !== 0) return;
                 const coords = getGridCoords(e.clientX, e.clientY);
@@ -302,12 +503,22 @@
                 drawCanvas();
             });
 
+            canvas.addEventListener('touchstart', (e) => {
+                const c = getEventCoords(e);
+                const coords = getGridCoords(c.clientX, c.clientY);
+                isDragging = true;
+                currentSelection = { startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y };
+                drawCanvas();
+                e.preventDefault();
+            }, { passive: false });
+
             window.addEventListener('mousemove', (e) => {
                 if (e.target === canvas && !isDragging) {
                     const coords = getGridCoords(e.clientX, e.clientY);
                     if(coords.x !== hoverGridPos.x || coords.y !== hoverGridPos.y) {
                         hoverGridPos = coords;
                         const hoveredAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+
                         if (hoveredAd && (hoveredAd.text || hoveredAd.link)) {
                             tooltip.style.opacity = '1';
                             tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
@@ -329,7 +540,17 @@
                 }
             });
 
-            window.addEventListener('mouseup', () => {
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    const c = getEventCoords(e);
+                    const coords = getGridCoords(c.clientX, c.clientY);
+                    currentSelection.endX = coords.x; currentSelection.endY = coords.y;
+                    drawCanvas(); updateSelectionUI();
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            const handleEnd = () => {
                 if (isDragging) {
                     isDragging = false;
                     const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
@@ -341,7 +562,10 @@
                     }
                     updateSelectionUI();
                 }
-            });
+            };
+
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
             
             canvas.addEventListener('click', (e) => {
                 if (currentSelection && (currentSelection.startX !== currentSelection.endX || currentSelection.startY !== currentSelection.endY)) return;
@@ -353,6 +577,7 @@
                     window.open(url, '_blank');
                 }
             });
+            canvas.addEventListener('contextmenu', e => e.preventDefault());
         }
 
         function updateSelectionUI() {
@@ -367,14 +592,64 @@
             const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
             
             const blocks = rect.w * rect.h;
-            currentTotalBlocks = blocks;
-            currentTotalPrice = blocks * PRICE_PER_BLOCK;
-            
+            const price = blocks * PRICE_PER_BLOCK;
+            const totalPixels = blocks * (BLOCK_PX * BLOCK_PX);
             const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
 
-            selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${(blocks * BLOCK_PX * BLOCK_PX).toLocaleString(numFmt)} px)`;
-            selPriceText.innerText = formatCurrency(currentTotalPrice);
-            paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+            selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${totalPixels.toLocaleString(numFmt)} px)`;
+            selPriceText.innerText = formatCurrency(price);
+            document.getElementById('payment-amount').innerText = formatCurrency(price);
+        }
+
+        function renderPayPalButton() {
+            const container = document.getElementById('paypal-container-YX36MXYU9QK4G');
+            if (!container || !window.paypal || !window.paypal.Buttons) return;
+            
+            // Hitung total harga tagihan dinamis
+            let blocks = 0;
+            if (currentSelection) {
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                blocks = rect.w * rect.h;
+            }
+            const totalPrice = (blocks * PRICE_PER_BLOCK).toFixed(2);
+
+            try {
+                container.innerHTML = ''; // Bersihkan container sebelumnya
+                window.paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                description: `Pixel Ads Space - ${blocks} blocks`,
+                                amount: {
+                                    currency_code: "USD",
+                                    value: totalPrice // Mengirim total tagihan yang akurat ke PayPal
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        // Setelah pembayaran PayPal sukses
+                        return actions.order.capture().then(function(details) {
+                            closeModal('modal-payment');
+                            showToast(t('msg_pay_success'), "success");
+                            
+                            // Reset form
+                            document.getElementById('ad-image').value = '';
+                            document.getElementById('ad-text').value = '';
+                            document.getElementById('ad-link').value = '';
+                            
+                            // Tampilkan modal untuk mengisi gambar iklan
+                            setTimeout(() => openModal('modal-content'), 300);
+                        });
+                    },
+                    onError: function (err) {
+                        console.error('PayPal Checkout Error:', err);
+                        showToast("Terjadi kesalahan atau pembayaran dibatalkan.", "error");
+                    }
+                }).render("#paypal-container-YX36MXYU9QK4G");
+            } catch (e) {
+                console.error("PayPal render error:", e);
+            }
         }
 
         function setupUIEvents() {
@@ -384,8 +659,17 @@
                 if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
                      showToast(t('msg_empty'), "error"); return;
                 }
-                paymentAmountText.innerText = formatCurrency(currentTotalPrice);
                 openModal('modal-payment');
+                renderPayPalButton();
+            });
+
+            document.getElementById('btn-simulate-success').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(t('msg_pay_success'), "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 300);
             });
 
             document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
@@ -410,7 +694,7 @@
             const icon = document.getElementById('toast-icon');
             document.getElementById('toast-msg').innerText = message;
             
-            const baseClass = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300";
+            const baseClass = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[60] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300";
             if (type === "error") {
                 toast.className = baseClass + " bg-red-600";
                 icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
@@ -435,35 +719,44 @@
             }
 
             const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                closeModal('modal-content'); showToast(t('msg_unavail'), "error"); return;
+            }
+            
             let imageUrl = null;
             let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
 
             if (fileInput.files && fileInput.files[0]) {
                 try {
                     imageUrl = await processImageFile(fileInput.files[0], rect.w * BLOCK_PX, rect.h * BLOCK_PX);
-                    await new Promise((resolve) => {
+                    await new Promise((resolve, reject) => {
                         const img = new Image();
                         img.onload = () => { cachedImages[imageUrl] = img; resolve(); };
-                        img.src = imageUrl;
+                        img.onerror = reject; img.src = imageUrl;
                     });
                 } catch(e) {
-                    console.error(e);
+                    console.error(e); showToast(t('msg_img_fail'), "error"); imageUrl = null;
                 }
             }
 
             const adData = {
-                x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
-                text: text, link: link, imageUrl: imageUrl, color: randomColor
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h, text: text, link: link,
+                imageUrl: imageUrl, color: randomColor, owner: userId, timestamp: new Date().toISOString()
             };
 
-            ads.push(adData);
-            
-            showToast(t('msg_pub_success'), "success");
-            closeModal('modal-content'); 
-            currentSelection = null; 
-            updateSelectionUI(); 
-            calculateStats();
-            drawCanvas();
+            try {
+                if (userLoggedIn()) {
+                    const adsRef = collection(db, 'artifacts', appId, 'public', 'data', 'ads');
+                    await addDoc(adsRef, adData);
+                } else {
+                    ads.push(adData); calculateStats(); drawCanvas();
+                }
+                showToast(t('msg_pub_success'), "success");
+            } catch (err) {
+                console.error(err); showToast(t('msg_save_fail'), "error");
+            } finally {
+                closeModal('modal-content'); currentSelection = null; updateSelectionUI(); drawCanvas();
+            }
         }
 
         function processImageFile(file, targetWidth, targetHeight) {
@@ -487,3 +780,5 @@
 
         window.addEventListener('load', init);
     </script>
+</body>
+</html>
