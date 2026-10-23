@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PAYPAL SDK DENGAN CLIENT ID BARU ANDA -->
+    <!-- PAYPAL SDK DENGAN CLIENT ID ANDA -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
     <style>
@@ -25,7 +25,7 @@
 
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
         
-        #paypal-button-container { position: relative; z-index: 10; }
+        #paypal-button-container { position: relative; z-index: 10; min-height: 150px; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
@@ -122,11 +122,11 @@
             </div>
 
             <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-5 text-left" data-i18n="sim_note">
-                Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda akan diarahkan untuk mengisi konten iklan.
+                Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda otomatis diarahkan untuk mengisi konten iklan.
             </div>
 
             <!-- Area Render Tombol PayPal -->
-            <div id="paypal-button-container" class="w-full min-h-[150px]"></div>
+            <div id="paypal-button-container" class="w-full flex justify-center items-center"></div>
             
             <!-- Tombol Bypass untuk Testing UI (Dev Mode) -->
             <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
@@ -287,7 +287,6 @@
             applyLanguage();
         });
 
-        // Config 20.000 Blocks
         const GRID_COLS = 200; 
         const GRID_ROWS = 100;
         const BLOCK_PX = 20; 
@@ -295,7 +294,6 @@
         const CANVAS_HEIGHT = GRID_ROWS * BLOCK_PX; 
         const PRICE_PER_BLOCK = 0.99; 
 
-        // States
         let ads = [];
         let isDragging = false;
         let currentSelection = null;
@@ -304,7 +302,6 @@
         let currentTotalPrice = 0.00;
         let currentTotalBlocks = 0;
 
-        // Elements
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d'); 
         const selectionPanel = document.getElementById('selection-panel');
@@ -327,56 +324,9 @@
                 drawCanvas();
                 setupCanvasEvents(); 
                 setupUIEvents();
-                initPayPalButton();
+                // initPayPalButton dihapus dari sini agar dirender dinamis
             } catch (err) {
                 console.error("Kesalahan saat memuat aplikasi:", err);
-            }
-        }
-
-        // PAYPAL Smart Buttons
-        function initPayPalButton() {
-            if (window.paypal) {
-                paypal.Buttons({
-                    style: {
-                        shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout',
-                    },
-                    createOrder: function(data, actions) {
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: {
-                                    currency_code: 'USD',
-                                    value: currentTotalPrice.toFixed(2)
-                                },
-                                description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
-                            }]
-                        });
-                    },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            closeModal('modal-payment');
-                            showToast(t('msg_pay_success'), "success");
-                            document.getElementById('ad-image').value = '';
-                            document.getElementById('ad-text').value = '';
-                            document.getElementById('ad-link').value = '';
-                            setTimeout(() => openModal('modal-content'), 500);
-                        }).catch(err => {
-                            console.error('Error saat capture PayPal:', err);
-                            showToast("Gagal memproses pembayaran Anda.", "error");
-                        });
-                    },
-                    onCancel: function (data) {
-                        // Jika user menutup popup secara sengaja
-                        console.warn("PayPal Checkout Dibatalkan oleh Pengguna.");
-                        showToast("Pembayaran dibatalkan / ditutup.", "info");
-                    },
-                    onError: function(err) {
-                        // Jika ada kesalahan server PayPal atau API ditolak
-                        console.error('PayPal Checkout API Error:', err);
-                        showToast("Transaksi ditolak PayPal. (Cek akun penerima/pengirim)", "error");
-                    }
-                }).render('#paypal-button-container');
-            } else {
-                console.warn("Script PayPal gagal dimuat.");
             }
         }
 
@@ -549,12 +499,57 @@
                      showToast(t('msg_empty'), "error"); return;
                 }
                 paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+                
+                // MENGATASI BUG RENDER PAYPAL (Hapus tombol lama, render ulang saat modal dibuka)
+                const paypalContainer = document.getElementById('paypal-button-container');
+                paypalContainer.innerHTML = ''; 
+                
+                if (window.paypal) {
+                    paypal.Buttons({
+                        style: {
+                            shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout',
+                        },
+                        createOrder: function(data, actions) {
+                            return actions.order.create({
+                                purchase_units: [{
+                                    amount: {
+                                        currency_code: 'USD',
+                                        value: currentTotalPrice.toFixed(2)
+                                    },
+                                    description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                }]
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            return actions.order.capture().then(function(details) {
+                                closeModal('modal-payment');
+                                showToast(t('msg_pay_success'), "success");
+                                document.getElementById('ad-image').value = '';
+                                document.getElementById('ad-text').value = '';
+                                document.getElementById('ad-link').value = '';
+                                setTimeout(() => openModal('modal-content'), 500);
+                            }).catch(err => {
+                                console.error('Error capture:', err);
+                                showToast("Gagal memproses pembayaran.", "error");
+                            });
+                        },
+                        onCancel: function (data) {
+                            showToast("Pembayaran dibatalkan / ditutup.", "info");
+                        },
+                        onError: function(err) {
+                            console.error('PayPal Error:', err);
+                            showToast("Transaksi ditolak PayPal.", "error");
+                        }
+                    }).render('#paypal-button-container');
+                } else {
+                    paypalContainer.innerHTML = `<p class="text-sm text-red-500 text-center font-medium my-4">Script PayPal gagal dimuat.<br>Matikan AdBlocker / Brave Shields Anda.</p>`;
+                }
+
                 openModal('modal-payment');
             });
 
             document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
 
-            // LOGIKA TOMBOL BYPASS UNTUK TESTING UI KETIKA PAYPAL SEDANG ERROR
             document.getElementById('btn-bypass-payment').addEventListener('click', () => {
                 closeModal('modal-payment');
                 showToast("Pembayaran dilewati (Mode Developer)", "success");
