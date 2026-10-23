@@ -333,6 +333,27 @@
                 const key = el.getAttribute('data-i18n-ph');
                 if (i18nData[currentLang][key]) el.placeholder = i18nData[currentLang][key];
             });
+
+            // Animasi Toggle ID / EN
+            const switchBg = document.getElementById('switch-bg');
+            const switchKnob = document.getElementById('switch-knob');
+            const lblId = document.getElementById('lbl-id');
+            const lblEn = document.getElementById('lbl-en');
+            
+            if (switchBg) {
+                if (currentLang === 'en') {
+                    switchBg.className = "relative w-8 h-4 bg-blue-600 rounded-full shadow-inner transition-colors duration-300 ease-in-out";
+                    switchKnob.className = "absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-4";
+                    lblEn.className = "text-xs font-bold text-gray-800 transition-colors";
+                    lblId.className = "text-xs font-bold text-gray-400 transition-colors";
+                } else {
+                    switchBg.className = "relative w-8 h-4 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out";
+                    switchKnob.className = "absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0";
+                    lblId.className = "text-xs font-bold text-gray-800 transition-colors";
+                    lblEn.className = "text-xs font-bold text-gray-400 transition-colors";
+                }
+            }
+
             calculateStats();
             updateSelectionUI();
         }
@@ -798,75 +819,3 @@
             if(!currentSelection) return;
             const text = document.getElementById('ad-text').value.trim();
             const link = document.getElementById('ad-link').value.trim();
-            const fileInput = document.getElementById('ad-image');
-            
-            if (!text && fileInput.files.length === 0) {
-                showToast(t('msg_upload_req'), "error"); return;
-            }
-
-            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
-            let imageUrl = null;
-            let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-
-            if (fileInput.files && fileInput.files[0]) {
-                try {
-                    imageUrl = await processImageFile(fileInput.files[0], rect.w * BLOCK_PX, rect.h * BLOCK_PX);
-                    await new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => { cachedImages[imageUrl] = img; resolve(); };
-                        img.src = imageUrl;
-                    });
-                } catch(e) {
-                    console.error(e);
-                }
-            }
-
-            const newAd = {
-                x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
-                text: text, link: link, image_url: imageUrl, user_email: currentUser ? currentUser.email : "guest"
-            };
-
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('ads').insert([newAd]);
-                if (error) {
-                    showToast("Gagal menyimpan ke cloud: " + error.message, "error");
-                    return;
-                }
-            }
-
-            ads.push({
-                x: rect.x, y: rect.y, w: rect.w, h: rect.h,
-                text: text, link: link, imageUrl: imageUrl, color: randomColor
-            });
-            
-            showToast(t('msg_pub_success'), "success");
-            closeModal('modal-content'); 
-            currentSelection = null; 
-            updateSelectionUI(); 
-            calculateStats();
-            drawCanvas();
-        }
-
-        function processImageFile(file, targetWidth, targetHeight) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const oc = document.createElement('canvas');
-                        oc.width = targetWidth; oc.height = targetHeight;
-                        const octx = oc.getContext('2d');
-                        octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
-                        octx.drawImage(img, 0, 0, targetWidth, targetHeight);
-                        resolve(oc.toDataURL('image/png'));
-                    };
-                    img.onerror = reject; img.src = e.target.result;
-                };
-                reader.onerror = reject; reader.readAsDataURL(file);
-            });
-        }
-
-        window.addEventListener('load', init);
-    </script>
-</body>
-</html>
