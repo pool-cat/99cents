@@ -12,13 +12,18 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        canvas {
+        
+        /* Proteksi mutlak ukuran kanvas melalui CSS agar tak hancur dikompres */
+        #gridCanvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
             background-color: #ffffff;
+            width: 4000px !important;
+            height: 2000px !important;
+            max-width: none !important; /* Menolak kompresi Tailwind */
+            display: block;
         }
         
-        /* Modifikasi Scrollbar agar lebih nyaman saat menggeser map raksasa */
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 5px; }
         ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
@@ -98,10 +103,10 @@
 
     <!-- Canvas Area -->
     <main class="flex-1 relative overflow-auto bg-gray-300 h-[55vh] md:h-full z-10" id="canvas-container">
-        <!-- PENTING: Tambahkan margin agar canvas bisa di-scroll dengan nyaman -->
-        <div class="w-max h-max p-10 min-w-full min-h-full flex items-center justify-center">
-            <!-- PENTING: Class 'max-w-none' menolak paksaan penyusutan layar dari Tailwind, menjaga 1px grid tetap tajam -->
-            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair max-w-none bg-white rounded-sm"></canvas>
+        <!-- Area kontainer dijamin menampung 4000x2000px tanpa mengecil -->
+        <div class="w-max h-max p-10 min-w-max min-h-max flex items-center justify-center bg-gray-300">
+            <!-- Canvas disuntik ukuran yang tidak bisa dilanggar -->
+            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair rounded-sm"></canvas>
         </div>
 
         <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
@@ -346,10 +351,14 @@
             ctx.fillStyle = "#ffffff"; 
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Garis Grid dipertegas menjadi Abu-abu (#d1d5db / Tailwind gray-300) agar lebih jelas
-            ctx.strokeStyle = "#d1d5db";
+            // Garis Grid dipertegas menjadi Abu-abu Tua (#b91c1c / merah bata saat debug, dikembalikan ke abu gelap #9ca3af agar kontras)
+            ctx.strokeStyle = "#9ca3af";
             ctx.lineWidth = 1;
+            
+            // Perbaikan rendering garis agar tidak blur (half-pixel shift technique)
+            ctx.translate(0.5, 0.5);
             ctx.beginPath();
+            
             for (let i = 0; i <= CANVAS_WIDTH; i += BLOCK_PX) {
                 ctx.moveTo(i, 0); ctx.lineTo(i, CANVAS_HEIGHT);
             }
@@ -357,6 +366,7 @@
                 ctx.moveTo(0, i); ctx.lineTo(CANVAS_WIDTH, i);
             }
             ctx.stroke();
+            ctx.translate(-0.5, -0.5); // Kembalikan posisi
 
             ads.forEach(ad => {
                 const pxX = ad.x * BLOCK_PX, pxY = ad.y * BLOCK_PX;
@@ -379,4 +389,298 @@
             });
 
             if (currentSelection) {
-                const rect =
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                const pxX = rect.x * BLOCK_PX, pxY = rect.y * BLOCK_PX;
+                const pxW = rect.w * BLOCK_PX, pxH = rect.h * BLOCK_PX;
+
+                const isValid = isAreaFree(rect.x, rect.y, rect.w, rect.h);
+                ctx.fillStyle = isValid ? "rgba(59, 130, 246, 0.45)" : "rgba(239, 68, 68, 0.45)";
+                ctx.fillRect(pxX, pxY, pxW, pxH);
+                ctx.strokeStyle = isValid ? "#2563eb" : "#dc2626";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(pxX, pxY, pxW, pxH);
+            }
+        }
+
+        function getGridCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let x = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_WIDTH - 0.1));
+            let y = Math.max(0, Math.min((clientY - rect.top) * scaleY, CANVAS_HEIGHT - 0.1));
+            return { x: Math.floor(x / BLOCK_PX), y: Math.floor(y / BLOCK_PX) };
+        }
+
+        function getSelectionRect(startX, startY, endX, endY) {
+            const minX = Math.min(startX, endX), minY = Math.min(startY, endY);
+            return { x: minX, y: minY, w: Math.max(startX, endX) - minX + 1, h: Math.max(startY, endY) - minY + 1 };
+        }
+
+        function isAreaFree(x, y, w, h) {
+            return !ads.some(ad => (x < ad.x + ad.w && x + w > ad.x && y < ad.y + ad.h && y + h > ad.y));
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', (e) => {
+                if(e.button !== 0) return;
+                const coords = getGridCoords(e.clientX, e.clientY);
+                isDragging = true;
+                currentSelection = { startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y };
+                drawCanvas();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (e.target === canvas && !isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    if(coords.x !== hoverGridPos.x || coords.y !== hoverGridPos.y) {
+                        hoverGridPos = coords;
+                        const hoveredAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+                        if (hoveredAd && (hoveredAd.text || hoveredAd.link)) {
+                            tooltip.style.opacity = '1';
+                            tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
+                            tooltipText.innerText = hoveredAd.text || "Pixel Ad";
+                            tooltipLink.innerText = hoveredAd.link ? t('tooltip_link') : "";
+                            canvas.style.cursor = "pointer";
+                        } else {
+                            tooltip.style.opacity = '0'; canvas.style.cursor = "crosshair";
+                        }
+                    } else if (tooltip.style.opacity === '1') {
+                        tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
+                    }
+                } else { tooltip.style.opacity = '0'; }
+
+                if (isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    currentSelection.endX = coords.x; currentSelection.endY = coords.y;
+                    drawCanvas(); updateSelectionUI();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                    if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                        showToast(t('msg_collision'), "error");
+                        if (btnInitPayment) btnInitPayment.disabled = true;
+                    } else {
+                        if (btnInitPayment) btnInitPayment.disabled = false;
+                    }
+                    updateSelectionUI();
+                }
+            });
+            
+            canvas.addEventListener('click', (e) => {
+                if (currentSelection && (currentSelection.startX !== currentSelection.endX || currentSelection.startY !== currentSelection.endY)) return;
+                const coords = getGridCoords(e.clientX, e.clientY);
+                const clickedAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+                if (clickedAd && clickedAd.link) {
+                    let url = clickedAd.link;
+                    if(!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+                    window.open(url, '_blank');
+                }
+            });
+        }
+
+        function updateSelectionUI() {
+            if (!currentSelection) {
+                selectionPanel.classList.add('opacity-50');
+                if (btnInitPayment) btnInitPayment.disabled = true;
+                selSizeText.innerText = `0 x 0 ${t('blocks')}`;
+                selPriceText.innerText = formatCurrency(0);
+                return;
+            }
+            selectionPanel.classList.remove('opacity-50');
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            
+            const blocks = rect.w * rect.h;
+            currentTotalBlocks = blocks;
+            currentTotalPrice = blocks * PRICE_PER_BLOCK; 
+            
+            const numFmt = currentLang === 'id' ? 'id-ID' : 'en-US';
+            selSizeText.innerText = `${rect.w} x ${rect.h} ${t('blocks')} (${(blocks * BLOCK_PX * BLOCK_PX).toLocaleString(numFmt)} px)`;
+            selPriceText.innerText = formatCurrency(currentTotalPrice);
+            paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+        }
+
+        function setupUIEvents() {
+            document.getElementById('btn-init-payment').addEventListener('click', () => {
+                if (!currentSelection) return;
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                     showToast(t('msg_empty'), "error"); return;
+                }
+                paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+                
+                const paypalContainer = document.getElementById('paypal-button-container');
+                paypalContainer.innerHTML = ''; 
+                
+                if (window.paypal) {
+                    paypal.Buttons({
+                        style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
+                        createOrder: function(data, actions) {
+                            return actions.order.create({
+                                purchase_units: [{
+                                    amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
+                                    description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                }]
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            return actions.order.capture().then(function(details) {
+                                closeModal('modal-payment');
+                                showToast(t('msg_pay_success'), "success");
+                                document.getElementById('ad-image').value = '';
+                                document.getElementById('ad-text').value = '';
+                                document.getElementById('ad-link').value = '';
+                                setTimeout(() => openModal('modal-content'), 500);
+                            }).catch(err => {
+                                console.error('Error capture:', err);
+                                showToast("Gagal memproses pembayaran.", "error");
+                            });
+                        },
+                        onCancel: function (data) {
+                            showToast("Pembayaran dibatalkan / ditutup.", "info");
+                        },
+                        onError: function(err) {
+                            console.error('PayPal Error:', err);
+                            showToast("Transaksi ditolak PayPal.", "error");
+                        }
+                    }).render('#paypal-button-container');
+                } else {
+                    paypalContainer.innerHTML = `
+                        <div class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded-md mb-3 text-left">
+                            <strong>Script PayPal diblokir oleh browser/AdBlocker.</strong><br>Gunakan tombol pembayaran manual di bawah ini.
+                        </div>
+                        <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="w-full mb-3">
+                            <input type="hidden" name="cmd" value="_xclick">
+                            <input type="hidden" name="business" value="sb-94343iz53508758@business.example.com">
+                            <input type="hidden" name="item_name" value="Pixel Ads Space - ${currentTotalBlocks} blocks">
+                            <input type="hidden" name="amount" value="${currentTotalPrice.toFixed(2)}">
+                            <input type="hidden" name="currency_code" value="USD">
+                            <button type="submit" class="w-full py-3 bg-[#003087] hover:bg-[#001c56] text-white font-bold rounded-lg transition-colors flex justify-center items-center">
+                                Checkout
+                            </button>
+                        </form>
+                        <button onclick="document.getElementById('btn-bypass-payment').click()" class="w-full py-2 text-xs font-medium text-blue-600 hover:underline">
+                            Saya sudah transfer (Lanjut pasang iklan)
+                        </button>
+                    `;
+                }
+
+                openModal('modal-payment');
+            });
+
+            document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
+
+            document.getElementById('btn-bypass-payment').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast("Pembayaran dilewati (Mode Developer)", "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 500);
+            });
+        }
+
+        window.openModal = (id) => {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.remove('hidden'); void modal.offsetWidth;
+            modal.classList.remove('opacity-0'); inner.classList.remove('scale-95');
+        };
+
+        window.closeModal = (id) => {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.add('opacity-0'); inner.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        function showToast(message, type="info") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = message;
+            
+            const baseClass = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300";
+            if (type === "error") {
+                toast.className = baseClass + " bg-red-600";
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+            } else if(type === "success") {
+                toast.className = baseClass + " bg-green-600";
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            } else if(type === "info") {
+                 toast.className = baseClass + " bg-gray-700"; 
+                 icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+            } else {
+                 toast.className = baseClass + " bg-gray-900"; icon.innerHTML = '';
+            }
+            requestAnimationFrame(() => { toast.classList.remove('translate-y-[-150%]', 'opacity-0'); });
+            setTimeout(() => { toast.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3500);
+        }
+
+        async function publishAd() {
+            if(!currentSelection) return;
+            const text = document.getElementById('ad-text').value.trim();
+            const link = document.getElementById('ad-link').value.trim();
+            const fileInput = document.getElementById('ad-image');
+            
+            if (!text && fileInput.files.length === 0) {
+                showToast(t('msg_upload_req'), "error"); return;
+            }
+
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            let imageUrl = null;
+            let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+            if (fileInput.files && fileInput.files[0]) {
+                try {
+                    imageUrl = await processImageFile(fileInput.files[0], rect.w * BLOCK_PX, rect.h * BLOCK_PX);
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => { cachedImages[imageUrl] = img; resolve(); };
+                        img.src = imageUrl;
+                    });
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+
+            const adData = {
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
+                text: text, link: link, imageUrl: imageUrl, color: randomColor
+            };
+
+            ads.push(adData);
+            
+            showToast(t('msg_pub_success'), "success");
+            closeModal('modal-content'); 
+            currentSelection = null; 
+            updateSelectionUI(); 
+            calculateStats();
+            drawCanvas();
+        }
+
+        function processImageFile(file, targetWidth, targetHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const oc = document.createElement('canvas');
+                        oc.width = targetWidth; oc.height = targetHeight;
+                        const octx = oc.getContext('2d');
+                        octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
+                        octx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        resolve(oc.toDataURL('image/png'));
+                    };
+                    img.onerror = reject; img.src = e.target.result;
+                };
+                reader.onerror = reject; reader.readAsDataURL(file);
+            });
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
