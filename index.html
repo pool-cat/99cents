@@ -11,12 +11,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PAYPAL SDK DENGAN CLIENT ID ANDA -->
+    <!-- Supabase Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- PAYPAL SDK -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        
         #gridCanvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
@@ -26,12 +28,10 @@
             max-width: none !important;
             display: block;
         }
-        
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 5px; }
         ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
         #paypal-button-container { position: relative; z-index: 10; min-height: 150px; }
     </style>
@@ -61,7 +61,7 @@
             </div>
         </div>
         
-        <!-- Status User Login -->
+        <!-- Status User Login Cloud -->
         <div id="user-status-bar" class="px-5 py-2 bg-blue-50 border-b border-blue-100 flex justify-between items-center hidden">
             <span class="text-xs text-blue-800 font-medium truncate" id="user-welcome-text">Halo, User</span>
             <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold">Keluar</button>
@@ -93,9 +93,6 @@
             <div id="admin-panel-section" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
                 <h2 class="font-semibold text-amber-800 text-sm mb-1">Panel Admin</h2>
                 <p class="text-xs text-amber-700 mb-3">Masuk sebagai Administrator Utama.</p>
-                <button id="btn-admin-manage" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-1.5 px-3 rounded-md text-xs transition-colors">
-                    Kelola Semua Iklan
-                </button>
             </div>
 
             <div class="flex-1">
@@ -137,7 +134,7 @@
         </div>
     </main>
 
-    <!-- Modal Auth (Login & Register) -->
+    <!-- Modal Auth -->
     <div id="modal-auth" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 transform scale-95 transition-transform duration-300 relative">
             <div class="flex justify-between items-center mb-4">
@@ -148,11 +145,10 @@
                 <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
             </div>
 
-            <!-- Form Login -->
             <form id="form-login" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Username / Email</label>
-                    <input type="text" id="login-user" required placeholder="Cth: 99Cents Space" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Email / Username</label>
+                    <input type="text" id="login-email" required placeholder="email@domain.com atau Admin" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Kata Sandi</label>
@@ -163,12 +159,7 @@
                 </button>
             </form>
 
-            <!-- Form Register -->
             <form id="form-register" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama / Username</label>
-                    <input type="text" id="reg-user" required placeholder="Buat username unik" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="reg-email" required placeholder="email@domain.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
@@ -184,7 +175,7 @@
         </div>
     </div>
 
-    <!-- Modal 1: Payment Checkout (PayPal) -->
+    <!-- Modal Pembayaran PayPal -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative">
             <div class="flex justify-between items-center mb-4">
@@ -198,22 +189,20 @@
             </div>
 
             <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-5 text-left" data-i18n="sim_note">
-                Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda otomatis diarahkan untuk mengisi konten iklan.
+                Selesaikan pembayaran melalui PayPal di bawah. Setelah terkonfirmasi oleh sistem, Anda akan diarahkan untuk mengunggah iklan.
             </div>
 
             <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col"></div>
             
-            <!-- Area Khusus Admin (Bypass Pembayaran / Dev Mode) -->
             <div id="admin-bypass-container" class="w-full mt-3 hidden">
-                <div id="manual-fallback-area"></div>
-                <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
-                    [Dev Mode] Lewati Pembayaran untuk Test UI
+                <button id="btn-bypass-payment" class="w-full py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
+                    [Admin Mode] Lewati Pembayaran
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal 2: Ad Setup Content (Upload Gambar) -->
+    <!-- Modal Setup Iklan -->
     <div id="modal-content" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-5">
@@ -227,11 +216,11 @@
                     <input type="file" id="ad-image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_text">Teks/Judul Iklan (Muncul saat kursor diarahkan)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_text">Teks/Judul Iklan</label>
                     <input type="text" id="ad-text" data-i18n-ph="ad_text_ph" placeholder="Cth: Sewa Mobil Jakarta" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_link">Tautan Web URL (Opsional)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_link">Tautan Web URL</label>
                     <input type="url" id="ad-link" data-i18n-ph="ad_link_ph" placeholder="https://www.websiteanda.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="pt-4 flex justify-end gap-2">
@@ -242,7 +231,7 @@
         </div>
     </div>
 
-    <!-- Notification Toast -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 translate-y-[-150%] opacity-0">
         <span id="toast-icon"></span>
         <span id="toast-msg" class="text-sm font-medium">Message</span>
@@ -250,6 +239,17 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
+        // KONFIGURASI SUPABASE CLOUD
+        const SUPABASE_URL = 'https://dnymbpjcqeupvexxkkai.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_NK3blpaL1GM8puCldwrwCQ_P6SZnYjk';
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn("Supabase gagal diinisialisasi.");
+        }
+
         const i18nData = {
             id: {
                 subtitle: "Beli ruang pixel untuk iklan Anda secara permanen.",
@@ -270,20 +270,18 @@
                 proceed_payment: "Lanjut ke Pembayaran",
                 ad_details: "Detail Iklan Anda",
                 upload_img: "Unggah Gambar Iklan",
-                ad_text: "Teks/Judul Iklan (Muncul saat kursor diarahkan)",
-                ad_text_ph: "Cth: Sewa Mobil Jakarta",
-                ad_link: "Tautan Web URL (Opsional)",
-                ad_link_ph: "https://www.websiteanda.com",
+                ad_text: "Teks/Judul Iklan",
+                ad_link: "Tautan Web URL",
                 btn_cancel: "Batal",
                 btn_publish: "Pasang Iklan",
                 secure_checkout: "Checkout Aman",
                 total_due: "Total Tagihan",
-                sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda otomatis diarahkan untuk mengisi konten iklan.",
+                sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah terkonfirmasi oleh sistem, Anda akan diarahkan untuk mengunggah iklan.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
-                msg_pay_success: "Pembayaran Berhasil! Silakan unggah gambar Anda.",
+                msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi Sistem!",
                 msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
-                msg_pub_success: "Iklan berhasil dipublikasikan!",
+                msg_pub_success: "Iklan berhasil dipublikasikan ke cloud!",
                 blocks: "blok",
                 tooltip_link: "Klik untuk mengunjungi link"
             },
@@ -306,20 +304,18 @@
                 proceed_payment: "Proceed to Payment",
                 ad_details: "Ad Details",
                 upload_img: "Upload Ad Image",
-                ad_text: "Ad Text/Title (Hover text)",
-                ad_text_ph: "Ex: Buy my awesome product",
-                ad_link: "Web URL Link (Optional)",
-                ad_link_ph: "https://www.yourwebsite.com",
+                ad_text: "Ad Text/Title",
+                ad_link: "Web URL Link",
                 btn_cancel: "Cancel",
                 btn_publish: "Publish Ad",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Complete your payment via PayPal below. Once successful, you will automatically proceed to upload your ad.",
+                sim_note: "Complete your payment via PayPal below. Once confirmed by system, you will proceed to upload your ad.",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
-                msg_pay_success: "Payment Successful! Please upload your image.",
+                msg_pay_success: "Payment Successful & Confirmed!",
                 msg_upload_req: "Please upload an image or enter text.",
-                msg_pub_success: "Ad successfully published!",
+                msg_pub_success: "Ad successfully published to cloud!",
                 blocks: "blocks",
                 tooltip_link: "Click to visit link"
             }
@@ -337,25 +333,6 @@
                 const key = el.getAttribute('data-i18n-ph');
                 if (i18nData[currentLang][key]) el.placeholder = i18nData[currentLang][key];
             });
-            
-            const switchBg = document.getElementById('switch-bg');
-            const switchKnob = document.getElementById('switch-knob');
-            const lblId = document.getElementById('lbl-id');
-            const lblEn = document.getElementById('lbl-en');
-            
-            if (switchBg) {
-                if (currentLang === 'en') {
-                    switchBg.classList.replace('bg-gray-300', 'bg-blue-600');
-                    switchKnob.classList.replace('translate-x-0', 'translate-x-4');
-                    lblEn.classList.replace('text-gray-400', 'text-gray-800');
-                    lblId.classList.replace('text-gray-800', 'text-gray-400');
-                } else {
-                    switchBg.classList.replace('bg-blue-600', 'bg-gray-300');
-                    switchKnob.classList.replace('translate-x-4', 'translate-x-0');
-                    lblId.classList.replace('text-gray-400', 'text-gray-800');
-                    lblEn.classList.replace('text-gray-800', 'text-gray-400');
-                }
-            }
             calculateStats();
             updateSelectionUI();
         }
@@ -396,16 +373,49 @@
 
         const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
 
-        function init() {
+        async function init() {
             try {
                 applyLanguage();
+                if (supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        currentUser = session.user;
+                        updateAuthUI();
+                    }
+                    supabaseClient.auth.onAuthStateChange((_event, session) => {
+                        currentUser = session ? session.user : null;
+                        updateAuthUI();
+                    });
+                    await fetchAdsFromCloud();
+                }
                 calculateStats(); 
                 drawCanvas();
                 setupCanvasEvents(); 
                 setupUIEvents();
-                checkSession();
             } catch (err) {
                 console.error("Kesalahan saat memuat aplikasi:", err);
+            }
+        }
+
+        async function fetchAdsFromCloud() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('ads').select('*');
+            if (!error && data) {
+                ads = data.map(item => ({
+                    x: item.x, y: item.y, w: item.w, h: item.h,
+                    text: item.text, link: item.link, imageUrl: item.image_url, color: '#3b82f6'
+                }));
+                for (let ad of ads) {
+                    if (ad.imageUrl && !cachedImages[ad.imageUrl]) {
+                        await new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => { cachedImages[ad.imageUrl] = img; resolve(); };
+                            img.src = ad.imageUrl;
+                        });
+                    }
+                }
+                calculateStats();
+                drawCanvas();
             }
         }
 
@@ -433,60 +443,56 @@
                 formLogin.classList.add('hidden');
             });
 
-            formLogin.addEventListener('submit', (e) => {
+            formLogin.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const u = document.getElementById('login-user').value.trim();
-                const p = document.getElementById('login-pass').value;
+                const email = document.getElementById('login-email').value.trim();
+                const pass = document.getElementById('login-pass').value;
 
-                if (u === "99Cents Space" && p === "Ryutaka_86@") {
-                    currentUser = { name: "99Cents Space", role: "admin" };
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                if (email === "99Cents Space" && pass === "Ryutaka_86@") {
+                    currentUser = { email: "99Cents Space", role: "admin" };
                     closeModal('modal-auth');
                     updateAuthUI();
                     showToast("Login Berhasil sebagai Admin!", "success");
                     return;
                 }
 
-                const users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-                const found = users.find(x => x.username === u && x.password === p);
+                if (!supabaseClient) {
+                    showToast("Harap atur kredensial Supabase terlebih dahulu.", "error");
+                    return;
+                }
 
-                if (found) {
-                    currentUser = { name: found.username, role: "user" };
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                if (error) {
+                    showToast(error.message, "error");
+                } else {
+                    currentUser = data.user;
                     closeModal('modal-auth');
                     updateAuthUI();
-                    showToast(`Selamat datang kembali, ${found.username}!`, "success");
-                } else {
-                    showToast("Username atau kata sandi salah!", "error");
+                    showToast("Login Berhasil!", "success");
                 }
             });
 
-            formRegister.addEventListener('submit', (e) => {
+            formRegister.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const u = document.getElementById('reg-user').value.trim();
                 const email = document.getElementById('reg-email').value.trim();
-                const p = document.getElementById('reg-pass').value;
+                const pass = document.getElementById('reg-pass').value;
 
-                if (u.toLowerCase() === "99cents space") {
-                    showToast("Nama username ini dilindungi sistem.", "error");
+                if (!supabaseClient) {
+                    showToast("Harap atur kredensial Supabase terlebih dahulu.", "error");
                     return;
                 }
 
-                let users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-                if (users.some(x => x.username === u)) {
-                    showToast("Username sudah digunakan!", "error");
-                    return;
+                const { error } = await supabaseClient.auth.signUp({ email, password: pass });
+                if (error) {
+                    showToast(error.message, "error");
+                } else {
+                    showToast("Pendaftaran berhasil! Silakan masuk.", "success");
+                    tabLoginBtn.click();
                 }
-
-                users.push({ username: u, email: email, password: p });
-                localStorage.setItem('pixel_users', JSON.stringify(users));
-                
-                showToast("Pendaftaran berhasil! Silakan masuk.", "success");
-                tabLoginBtn.click();
             });
 
-            btnLogout.addEventListener('click', () => {
-                localStorage.removeItem('currentUser');
+            btnLogout.addEventListener('click', async () => {
+                if (supabaseClient) await supabaseClient.auth.signOut();
                 currentUser = null;
                 updateAuthUI();
                 showToast("Berhasil keluar akun.", "info");
@@ -529,38 +535,21 @@
                                 setTimeout(() => openModal('modal-content'), 500);
                             }).catch(err => {
                                 console.error('Error capture:', err);
-                                showToast("Gagal memproses pembayaran.", "error");
+                                showToast("Gagal memproses pembayaran sistem.", "error");
                             });
                         },
                         onCancel: function (data) {
-                            showToast("Pembayaran dibatalkan / ditutup.", "info");
+                            showToast("Pembayaran dibatalkan.", "info");
                         },
                         onError: function(err) {
                             console.error('PayPal Error:', err);
-                            showToast("Transaksi ditolak PayPal.", "error");
+                            showToast("Transaksi ditolak.", "error");
                         }
                     }).render('#paypal-button-container');
-                } else {
-                    document.getElementById('manual-fallback-area').innerHTML = `
-                        <div class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded-md mb-3 text-left">
-                            <strong>Script PayPal diblokir oleh browser/AdBlocker.</strong><br>Gunakan tombol pembayaran manual di bawah ini.
-                        </div>
-                        <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="w-full mb-3">
-                            <input type="hidden" name="cmd" value="_xclick">
-                            <input type="hidden" name="business" value="sb-94343iz53508758@business.example.com">
-                            <input type="hidden" name="item_name" value="Pixel Ads Space - ${currentTotalBlocks} blocks">
-                            <input type="hidden" name="amount" value="${currentTotalPrice.toFixed(2)}">
-                            <input type="hidden" name="currency_code" value="USD">
-                            <button type="submit" class="w-full py-3 bg-[#003087] hover:bg-[#001c56] text-white font-bold rounded-lg transition-colors flex justify-center items-center">
-                                Checkout
-                            </button>
-                        </form>
-                    `;
                 }
 
-                // Tampilkan menu bypass HANYA JIKA USER ADALAH ADMIN
                 const adminBypassContainer = document.getElementById('admin-bypass-container');
-                if (currentUser && currentUser.role === 'admin') {
+                if (currentUser && (currentUser.role === 'admin' || currentUser.email === '99Cents Space')) {
                     adminBypassContainer.classList.remove('hidden');
                 } else {
                     adminBypassContainer.classList.add('hidden');
@@ -580,14 +569,6 @@
             });
         }
 
-        function checkSession() {
-            const saved = localStorage.getItem('currentUser');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                updateAuthUI();
-            }
-        }
-
         function updateAuthUI() {
             const btnOpenAuth = document.getElementById('btn-open-auth');
             const userStatusBar = document.getElementById('user-status-bar');
@@ -597,9 +578,10 @@
             if (currentUser) {
                 btnOpenAuth.classList.add('hidden');
                 userStatusBar.classList.remove('hidden');
-                userWelcomeText.innerText = `${currentUser.name} (${currentUser.role === 'admin' ? 'Admin' : 'Member'})`;
+                const emailName = currentUser.email || currentUser.name;
+                userWelcomeText.innerText = `${emailName}`;
 
-                if (currentUser.role === 'admin') {
+                if (emailName === '99Cents Space' || currentUser.role === 'admin') {
                     adminPanelSection.classList.remove('hidden');
                 } else {
                     adminPanelSection.classList.add('hidden');
@@ -839,12 +821,23 @@
                 }
             }
 
-            const adData = {
+            const newAd = {
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
-                text: text, link: link, imageUrl: imageUrl, color: randomColor, owner: currentUser ? currentUser.name : "Guest"
+                text: text, link: link, image_url: imageUrl, user_email: currentUser ? currentUser.email : "guest"
             };
 
-            ads.push(adData);
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('ads').insert([newAd]);
+                if (error) {
+                    showToast("Gagal menyimpan ke cloud: " + error.message, "error");
+                    return;
+                }
+            }
+
+            ads.push({
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h,
+                text: text, link: link, imageUrl: imageUrl, color: randomColor
+            });
             
             showToast(t('msg_pub_success'), "success");
             closeModal('modal-content'); 
