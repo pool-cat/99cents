@@ -14,6 +14,9 @@
     <!-- Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <!-- PAYPAL SDK with User's Client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         #gridCanvas {
@@ -30,6 +33,7 @@
         ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
+        #paypal-button-container { position: relative; z-index: 10; min-height: 140px; width: 100%; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
@@ -184,22 +188,17 @@
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
             </div>
 
-            <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-4 text-left" data-i18n="sim_note">
-                Klik tombol di bawah untuk membayar langsung via PayPal. Setelah pembayaran selesai, klik tombol konfirmasi.
-            </div>
-
-            <!-- Tombol Direct Link PayPal -->
-            <div class="w-full space-y-3 mb-3">
-                <a id="paypal-direct-link" href="https://paypal.me/poolcat" target="_blank" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-3 px-4 rounded-lg text-sm transition-colors shadow flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.022.382 5.47 0 5.996 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.026-.64 3.282-2.583 5.426-5.59 5.426H11.23l-1.34 8.572a.641.641 0 0 1-.634.544h-2.18z"/></svg>
-                    Bayar Langsung via PayPal.Me
-                </a>
-
-                <button id="btn-confirm-payment" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
-                    Sudah Bayar, Lanjut ke Upload Iklan &rarr;
+            <!-- Kontainer Tombol PayPal Resmi -->
+            <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col mb-3"></div>
+            
+            <!-- Tombol Backup Konfirmasi (Jika skrip PayPal diblokir browser) -->
+            <div id="manual-checkout-container" class="w-full mb-3 hidden">
+                <button id="btn-manual-success" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
+                    Konfirmasi Pembayaran & Lanjut
                 </button>
             </div>
 
+            <!-- Tombol Bypass Admin -->
             <div id="admin-bypass-container" class="w-full mt-2 hidden">
                 <button id="btn-bypass-payment" class="w-full py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
                     [Admin Mode] Lewati Pembayaran
@@ -281,10 +280,10 @@
                 btn_publish: "Pasang Iklan",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Klik tombol di bawah untuk membayar langsung via PayPal. Setelah pembayaran selesai, klik tombol konfirmasi.",
+                sim_note: "Selesaikan pembayaran melalui PayPal di bawah.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
-                msg_pay_success: "Pembayaran Berhasil dikonfirmasi!",
+                msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi!",
                 msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
                 msg_pub_success: "Iklan berhasil dipublikasikan ke cloud!",
                 blocks: "blok",
@@ -315,10 +314,10 @@
                 btn_publish: "Publish Ad",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Click the button below to pay directly via PayPal. Once paid, click confirmation.",
+                sim_note: "Complete your payment via PayPal below.",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
-                msg_pay_success: "Payment Confirmed Successfully!",
+                msg_pay_success: "Payment Successful & Confirmed!",
                 msg_upload_req: "Please upload an image or enter text.",
                 msg_pub_success: "Ad successfully published to cloud!",
                 blocks: "blocks",
@@ -536,9 +535,56 @@
                 }
                 paymentAmountText.innerText = formatCurrency(currentTotalPrice);
                 
-                // Update link PayPal.Me dengan nominal otomatis (misal: https://paypal.me/poolcat/10.00USD)
-                const paypalDirectLink = document.getElementById('paypal-direct-link');
-                paypalDirectLink.href = `https://paypal.me/poolcat/${currentTotalPrice.toFixed(2)}USD`;
+                const paypalContainer = document.getElementById('paypal-button-container');
+                const manualContainer = document.getElementById('manual-checkout-container');
+                paypalContainer.innerHTML = ''; 
+                manualContainer.classList.add('hidden');
+
+                if (window.paypal) {
+                    try {
+                        paypal.Buttons({
+                            style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
+                            createOrder: function(data, actions) {
+                                return actions.order.create({
+                                    purchase_units: [{
+                                        amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
+                                        description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                    }]
+                                });
+                            },
+                            onApprove: function(data, actions) {
+                                return actions.order.capture().then(function(details) {
+                                    closeModal('modal-payment');
+                                    showToast(t('msg_pay_success'), "success");
+                                    document.getElementById('ad-image').value = '';
+                                    document.getElementById('ad-text').value = '';
+                                    document.getElementById('ad-link').value = '';
+                                    setTimeout(() => openModal('modal-content'), 500);
+                                });
+                            },
+                            onCancel: function (data) {
+                                showToast("Pembayaran dibatalkan.", "info");
+                            },
+                            onError: function(err) {
+                                console.error('PayPal Error:', err);
+                                manualContainer.classList.remove('hidden');
+                            }
+                        }).render('#paypal-button-container').catch(() => {
+                            manualContainer.classList.remove('hidden');
+                        });
+                    } catch (e) {
+                        manualContainer.classList.remove('hidden');
+                    }
+                } else {
+                    manualContainer.classList.remove('hidden');
+                }
+
+                // Fallback jika SDK PayPal gagal/terblokir dalam 1.5 detik
+                setTimeout(() => {
+                    if (paypalContainer.children.length === 0) {
+                        manualContainer.classList.remove('hidden');
+                    }
+                }, 1500);
 
                 const adminBypassContainer = document.getElementById('admin-bypass-container');
                 if (currentUser && (currentUser.role === 'admin' || currentUser.email === '99Cents Space')) {
@@ -550,7 +596,7 @@
                 openModal('modal-payment');
             });
 
-            document.getElementById('btn-confirm-payment').addEventListener('click', () => {
+            document.getElementById('btn-manual-success').addEventListener('click', () => {
                 closeModal('modal-payment');
                 showToast(t('msg_pay_success'), "success");
                 document.getElementById('ad-image').value = '';
