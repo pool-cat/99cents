@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PAYPAL SDK DENGAN CLIENT ID ANDA -->
+    <!-- PAYPAL SDK DENGAN CLIENT ID BARU -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
     <style>
@@ -15,7 +15,7 @@
         canvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
-            background-color: #ffffff;
+            background-color: #ffffff; /* Proteksi layar hitam */
         }
         
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -126,7 +126,7 @@
             </div>
 
             <!-- Area Render Tombol PayPal -->
-            <div id="paypal-button-container" class="w-full flex justify-center items-center"></div>
+            <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col"></div>
             
             <!-- Tombol Bypass untuk Testing UI (Dev Mode) -->
             <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
@@ -324,7 +324,6 @@
                 drawCanvas();
                 setupCanvasEvents(); 
                 setupUIEvents();
-                // initPayPalButton dihapus dari sini agar dirender dinamis
             } catch (err) {
                 console.error("Kesalahan saat memuat aplikasi:", err);
             }
@@ -500,22 +499,17 @@
                 }
                 paymentAmountText.innerText = formatCurrency(currentTotalPrice);
                 
-                // MENGATASI BUG RENDER PAYPAL (Hapus tombol lama, render ulang saat modal dibuka)
                 const paypalContainer = document.getElementById('paypal-button-container');
                 paypalContainer.innerHTML = ''; 
                 
+                // Mencegah error render ganda PayPal & sistem fallback AdBlock
                 if (window.paypal) {
                     paypal.Buttons({
-                        style: {
-                            shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout',
-                        },
+                        style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
                         createOrder: function(data, actions) {
                             return actions.order.create({
                                 purchase_units: [{
-                                    amount: {
-                                        currency_code: 'USD',
-                                        value: currentTotalPrice.toFixed(2)
-                                    },
+                                    amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
                                     description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
                                 }]
                             });
@@ -542,7 +536,25 @@
                         }
                     }).render('#paypal-button-container');
                 } else {
-                    paypalContainer.innerHTML = `<p class="text-sm text-red-500 text-center font-medium my-4">Script PayPal gagal dimuat.<br>Matikan AdBlocker / Brave Shields Anda.</p>`;
+                    // FALLBACK JIKA DIBLOKIR ADBLOCKER (Tombol HTML Standar)
+                    paypalContainer.innerHTML = `
+                        <div class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded-md mb-3 text-left">
+                            <strong>Script PayPal diblokir oleh browser/AdBlocker.</strong><br>Gunakan tombol pembayaran manual di bawah ini.
+                        </div>
+                        <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="w-full mb-3">
+                            <input type="hidden" name="cmd" value="_xclick">
+                            <input type="hidden" name="business" value="sb-94343iz53508758@business.example.com">
+                            <input type="hidden" name="item_name" value="Pixel Ads Space - ${currentTotalBlocks} blocks">
+                            <input type="hidden" name="amount" value="${currentTotalPrice.toFixed(2)}">
+                            <input type="hidden" name="currency_code" value="USD">
+                            <button type="submit" class="w-full py-3 bg-[#003087] hover:bg-[#001c56] text-white font-bold rounded-lg transition-colors flex justify-center items-center">
+                                Lanjut ke PayPal Secara Manual
+                            </button>
+                        </form>
+                        <button onclick="document.getElementById('btn-bypass-payment').click()" class="w-full py-2 text-xs font-medium text-blue-600 hover:underline">
+                            Saya sudah transfer (Lanjut pasang iklan)
+                        </button>
+                    `;
                 }
 
                 openModal('modal-payment');
