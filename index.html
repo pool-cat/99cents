@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Ads - Beli Ruang Iklan</title>
     
-    <!-- KODE BARU: Mengganti logo dunia dengan logo Anda (Favicon) -->
-    <link rel="icon" type="image/jpeg" href="99cents_logo.jpeg">
+    <!-- Favicon dengan nama file yang sesuai -->
+    <link rel="icon" type="image/jpeg" href="99cents_logo%20-%20Copy.jpeg">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,14 +17,13 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Proteksi mutlak ukuran kanvas melalui CSS agar tak hancur dikompres */
         #gridCanvas {
             image-rendering: pixelated; 
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
             background-color: #ffffff;
             width: 4000px !important;
             height: 2000px !important;
-            max-width: none !important; /* Menolak kompresi Tailwind */
+            max-width: none !important;
             display: block;
         }
         
@@ -43,7 +42,7 @@
     <aside class="w-full md:w-80 bg-white shadow-xl flex flex-col z-20 shrink-0 h-[45vh] md:h-full relative overflow-y-auto">
         <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white z-30 shadow-sm">
             <div class="flex items-center gap-3">
-                <img src="99cents_logo.jpeg" alt="Logo" class="h-10 w-auto object-contain rounded-md" onerror="this.style.display='none'">
+                <img src="99cents_logo%20-%20Copy.jpeg" alt="Logo" class="h-10 w-auto object-contain rounded-md" onerror="this.style.display='none'">
                 <h1 class="text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
             </div>
             
@@ -107,9 +106,7 @@
 
     <!-- Canvas Area -->
     <main class="flex-1 relative overflow-auto bg-gray-300 h-[55vh] md:h-full z-10" id="canvas-container">
-        <!-- Area kontainer dijamin menampung 4000x2000px tanpa mengecil -->
         <div class="w-max h-max p-10 min-w-max min-h-max flex items-center justify-center bg-gray-300">
-            <!-- Canvas disuntik ukuran yang tidak bisa dilanggar -->
             <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair rounded-sm"></canvas>
         </div>
 
@@ -355,11 +352,9 @@
             ctx.fillStyle = "#ffffff"; 
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Garis Grid dipertegas menjadi Abu-abu Tua (#b91c1c / merah bata saat debug, dikembalikan ke abu gelap #9ca3af agar kontras)
             ctx.strokeStyle = "#9ca3af";
             ctx.lineWidth = 1;
             
-            // Perbaikan rendering garis agar tidak blur (half-pixel shift technique)
             ctx.translate(0.5, 0.5);
             ctx.beginPath();
             
@@ -370,7 +365,7 @@
                 ctx.moveTo(0, i); ctx.lineTo(CANVAS_WIDTH, i);
             }
             ctx.stroke();
-            ctx.translate(-0.5, -0.5); // Kembalikan posisi
+            ctx.translate(-0.5, -0.5);
 
             ads.forEach(ad => {
                 const pxX = ad.x * BLOCK_PX, pxY = ad.y * BLOCK_PX;
