@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Ads - Beli Ruang Iklan</title>
     
-    <!-- Favicon dengan nama file yang sesuai -->
+    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="99cents_logo%20-%20Copy.jpeg">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PAYPAL SDK DENGAN CLIENT ID BARU -->
+    <!-- PAYPAL SDK DENGAN CLIENT ID ANDA -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_IL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
     <style>
@@ -46,15 +46,27 @@
                 <h1 class="text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
             </div>
             
-            <div class="flex items-center gap-2 cursor-pointer select-none" id="lang-toggle-container">
-                <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
-                <div class="relative w-10 h-5 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
-                    <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0" id="switch-knob"></div>
+            <div class="flex items-center gap-2">
+                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                    Masuk
+                </button>
+                
+                <div class="flex items-center gap-1 cursor-pointer select-none" id="lang-toggle-container">
+                    <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
+                    <div class="relative w-8 h-4 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
+                        <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0" id="switch-knob"></div>
+                    </div>
+                    <span class="text-xs font-bold text-gray-400 transition-colors" id="lbl-en">EN</span>
                 </div>
-                <span class="text-xs font-bold text-gray-400 transition-colors" id="lbl-en">EN</span>
             </div>
         </div>
         
+        <!-- Status User Login -->
+        <div id="user-status-bar" class="px-5 py-2 bg-blue-50 border-b border-blue-100 flex justify-between items-center hidden">
+            <span class="text-xs text-blue-800 font-medium truncate" id="user-welcome-text">Halo, User</span>
+            <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold">Keluar</button>
+        </div>
+
         <div class="px-5 py-3 border-b bg-gray-50">
             <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda secara permanen.</p>
         </div>
@@ -75,6 +87,15 @@
                     <span class="font-bold text-green-600">$0.99</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* 1 blok = 20x20 pixels.</p>
+            </div>
+
+            <!-- Panel Khusus Admin -->
+            <div id="admin-panel-section" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
+                <h2 class="font-semibold text-amber-800 text-sm mb-1">Panel Admin</h2>
+                <p class="text-xs text-amber-700 mb-3">Masuk sebagai Administrator Utama.</p>
+                <button id="btn-admin-manage" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-1.5 px-3 rounded-md text-xs transition-colors">
+                    Kelola Semua Iklan
+                </button>
             </div>
 
             <div class="flex-1">
@@ -116,6 +137,53 @@
         </div>
     </main>
 
+    <!-- Modal Auth (Login & Register) -->
+    <div id="modal-auth" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 transform scale-95 transition-transform duration-300 relative">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-4 border-b pb-2 w-full">
+                    <button id="tab-login-btn" class="font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1">Masuk</button>
+                    <button id="tab-register-btn" class="font-semibold text-gray-400 text-base pb-1">Daftar Akun</button>
+                </div>
+                <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
+            </div>
+
+            <!-- Form Login -->
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Username / Email</label>
+                    <input type="text" id="login-user" required placeholder="Cth: 99Cents Space" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Kata Sandi</label>
+                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm">
+                    Masuk Sekarang
+                </button>
+            </form>
+
+            <!-- Form Register -->
+            <form id="form-register" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama / Username</label>
+                    <input type="text" id="reg-user" required placeholder="Buat username unik" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="reg-email" required placeholder="email@domain.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Kata Sandi</label>
+                    <input type="password" id="reg-pass" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm">
+                    Daftar Akun Baru
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal 1: Payment Checkout (PayPal) -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative">
@@ -133,13 +201,15 @@
                 Selesaikan pembayaran melalui PayPal di bawah. Setelah berhasil, Anda otomatis diarahkan untuk mengisi konten iklan.
             </div>
 
-            <!-- Area Render Tombol PayPal -->
             <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col"></div>
             
-            <!-- Tombol Bypass untuk Testing UI (Dev Mode) -->
-            <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
-                [Dev Mode] Lewati Pembayaran untuk Test UI
-            </button>
+            <!-- Area Khusus Admin (Bypass Pembayaran / Dev Mode) -->
+            <div id="admin-bypass-container" class="w-full mt-3 hidden">
+                <div id="manual-fallback-area"></div>
+                <button id="btn-bypass-payment" class="w-full mt-2 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
+                    [Dev Mode] Lewati Pembayaran untuk Test UI
+                </button>
+            </div>
         </div>
     </div>
 
@@ -276,12 +346,12 @@
             if (switchBg) {
                 if (currentLang === 'en') {
                     switchBg.classList.replace('bg-gray-300', 'bg-blue-600');
-                    switchKnob.classList.replace('translate-x-0', 'translate-x-5');
+                    switchKnob.classList.replace('translate-x-0', 'translate-x-4');
                     lblEn.classList.replace('text-gray-400', 'text-gray-800');
                     lblId.classList.replace('text-gray-800', 'text-gray-400');
                 } else {
                     switchBg.classList.replace('bg-blue-600', 'bg-gray-300');
-                    switchKnob.classList.replace('translate-x-5', 'translate-x-0');
+                    switchKnob.classList.replace('translate-x-4', 'translate-x-0');
                     lblId.classList.replace('text-gray-400', 'text-gray-800');
                     lblEn.classList.replace('text-gray-800', 'text-gray-400');
                 }
@@ -309,6 +379,7 @@
         let cachedImages = {}; 
         let currentTotalPrice = 0.00;
         let currentTotalBlocks = 0;
+        let currentUser = null;
 
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d'); 
@@ -332,8 +403,211 @@
                 drawCanvas();
                 setupCanvasEvents(); 
                 setupUIEvents();
+                checkSession();
             } catch (err) {
                 console.error("Kesalahan saat memuat aplikasi:", err);
+            }
+        }
+
+        function setupUIEvents() {
+            const btnOpenAuth = document.getElementById('btn-open-auth');
+            const tabLoginBtn = document.getElementById('tab-login-btn');
+            const tabRegisterBtn = document.getElementById('tab-register-btn');
+            const formLogin = document.getElementById('form-login');
+            const formRegister = document.getElementById('form-register');
+            const btnLogout = document.getElementById('btn-logout');
+
+            btnOpenAuth.addEventListener('click', () => openModal('modal-auth'));
+
+            tabLoginBtn.addEventListener('click', () => {
+                tabLoginBtn.className = "font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1";
+                tabRegisterBtn.className = "font-semibold text-gray-400 text-base pb-1";
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            });
+
+            tabRegisterBtn.addEventListener('click', () => {
+                tabRegisterBtn.className = "font-bold text-green-600 text-base border-b-2 border-green-600 pb-1";
+                tabLoginBtn.className = "font-semibold text-gray-400 text-base pb-1";
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            });
+
+            formLogin.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value.trim();
+                const p = document.getElementById('login-pass').value;
+
+                if (u === "99Cents Space" && p === "Ryutaka_86@") {
+                    currentUser = { name: "99Cents Space", role: "admin" };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeModal('modal-auth');
+                    updateAuthUI();
+                    showToast("Login Berhasil sebagai Admin!", "success");
+                    return;
+                }
+
+                const users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
+                const found = users.find(x => x.username === u && x.password === p);
+
+                if (found) {
+                    currentUser = { name: found.username, role: "user" };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeModal('modal-auth');
+                    updateAuthUI();
+                    showToast(`Selamat datang kembali, ${found.username}!`, "success");
+                } else {
+                    showToast("Username atau kata sandi salah!", "error");
+                }
+            });
+
+            formRegister.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const u = document.getElementById('reg-user').value.trim();
+                const email = document.getElementById('reg-email').value.trim();
+                const p = document.getElementById('reg-pass').value;
+
+                if (u.toLowerCase() === "99cents space") {
+                    showToast("Nama username ini dilindungi sistem.", "error");
+                    return;
+                }
+
+                let users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
+                if (users.some(x => x.username === u)) {
+                    showToast("Username sudah digunakan!", "error");
+                    return;
+                }
+
+                users.push({ username: u, email: email, password: p });
+                localStorage.setItem('pixel_users', JSON.stringify(users));
+                
+                showToast("Pendaftaran berhasil! Silakan masuk.", "success");
+                tabLoginBtn.click();
+            });
+
+            btnLogout.addEventListener('click', () => {
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                updateAuthUI();
+                showToast("Berhasil keluar akun.", "info");
+            });
+
+            document.getElementById('btn-init-payment').addEventListener('click', () => {
+                if (!currentUser) {
+                    showToast("Silakan masuk terlebih dahulu untuk membeli ruang iklan.", "error");
+                    openModal('modal-auth');
+                    return;
+                }
+                if (!currentSelection) return;
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                     showToast(t('msg_empty'), "error"); return;
+                }
+                paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+                
+                const paypalContainer = document.getElementById('paypal-button-container');
+                paypalContainer.innerHTML = ''; 
+                
+                if (window.paypal) {
+                    paypal.Buttons({
+                        style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
+                        createOrder: function(data, actions) {
+                            return actions.order.create({
+                                purchase_units: [{
+                                    amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
+                                    description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                }]
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            return actions.order.capture().then(function(details) {
+                                closeModal('modal-payment');
+                                showToast(t('msg_pay_success'), "success");
+                                document.getElementById('ad-image').value = '';
+                                document.getElementById('ad-text').value = '';
+                                document.getElementById('ad-link').value = '';
+                                setTimeout(() => openModal('modal-content'), 500);
+                            }).catch(err => {
+                                console.error('Error capture:', err);
+                                showToast("Gagal memproses pembayaran.", "error");
+                            });
+                        },
+                        onCancel: function (data) {
+                            showToast("Pembayaran dibatalkan / ditutup.", "info");
+                        },
+                        onError: function(err) {
+                            console.error('PayPal Error:', err);
+                            showToast("Transaksi ditolak PayPal.", "error");
+                        }
+                    }).render('#paypal-button-container');
+                } else {
+                    document.getElementById('manual-fallback-area').innerHTML = `
+                        <div class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded-md mb-3 text-left">
+                            <strong>Script PayPal diblokir oleh browser/AdBlocker.</strong><br>Gunakan tombol pembayaran manual di bawah ini.
+                        </div>
+                        <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="w-full mb-3">
+                            <input type="hidden" name="cmd" value="_xclick">
+                            <input type="hidden" name="business" value="sb-94343iz53508758@business.example.com">
+                            <input type="hidden" name="item_name" value="Pixel Ads Space - ${currentTotalBlocks} blocks">
+                            <input type="hidden" name="amount" value="${currentTotalPrice.toFixed(2)}">
+                            <input type="hidden" name="currency_code" value="USD">
+                            <button type="submit" class="w-full py-3 bg-[#003087] hover:bg-[#001c56] text-white font-bold rounded-lg transition-colors flex justify-center items-center">
+                                Checkout
+                            </button>
+                        </form>
+                    `;
+                }
+
+                // Tampilkan menu bypass HANYA JIKA USER ADALAH ADMIN
+                const adminBypassContainer = document.getElementById('admin-bypass-container');
+                if (currentUser && currentUser.role === 'admin') {
+                    adminBypassContainer.classList.remove('hidden');
+                } else {
+                    adminBypassContainer.classList.add('hidden');
+                }
+
+                openModal('modal-payment');
+            });
+
+            document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
+            document.getElementById('btn-bypass-payment').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast("Pembayaran dilewati (Mode Admin)", "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 500);
+            });
+        }
+
+        function checkSession() {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                updateAuthUI();
+            }
+        }
+
+        function updateAuthUI() {
+            const btnOpenAuth = document.getElementById('btn-open-auth');
+            const userStatusBar = document.getElementById('user-status-bar');
+            const userWelcomeText = document.getElementById('user-welcome-text');
+            const adminPanelSection = document.getElementById('admin-panel-section');
+
+            if (currentUser) {
+                btnOpenAuth.classList.add('hidden');
+                userStatusBar.classList.remove('hidden');
+                userWelcomeText.innerText = `${currentUser.name} (${currentUser.role === 'admin' ? 'Admin' : 'Member'})`;
+
+                if (currentUser.role === 'admin') {
+                    adminPanelSection.classList.remove('hidden');
+                } else {
+                    adminPanelSection.classList.add('hidden');
+                }
+            } else {
+                btnOpenAuth.classList.remove('hidden');
+                userStatusBar.classList.add('hidden');
+                adminPanelSection.classList.add('hidden');
             }
         }
 
@@ -502,86 +776,6 @@
             paymentAmountText.innerText = formatCurrency(currentTotalPrice);
         }
 
-        function setupUIEvents() {
-            document.getElementById('btn-init-payment').addEventListener('click', () => {
-                if (!currentSelection) return;
-                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
-                if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
-                     showToast(t('msg_empty'), "error"); return;
-                }
-                paymentAmountText.innerText = formatCurrency(currentTotalPrice);
-                
-                const paypalContainer = document.getElementById('paypal-button-container');
-                paypalContainer.innerHTML = ''; 
-                
-                if (window.paypal) {
-                    paypal.Buttons({
-                        style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
-                        createOrder: function(data, actions) {
-                            return actions.order.create({
-                                purchase_units: [{
-                                    amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
-                                    description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
-                                }]
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            return actions.order.capture().then(function(details) {
-                                closeModal('modal-payment');
-                                showToast(t('msg_pay_success'), "success");
-                                document.getElementById('ad-image').value = '';
-                                document.getElementById('ad-text').value = '';
-                                document.getElementById('ad-link').value = '';
-                                setTimeout(() => openModal('modal-content'), 500);
-                            }).catch(err => {
-                                console.error('Error capture:', err);
-                                showToast("Gagal memproses pembayaran.", "error");
-                            });
-                        },
-                        onCancel: function (data) {
-                            showToast("Pembayaran dibatalkan / ditutup.", "info");
-                        },
-                        onError: function(err) {
-                            console.error('PayPal Error:', err);
-                            showToast("Transaksi ditolak PayPal.", "error");
-                        }
-                    }).render('#paypal-button-container');
-                } else {
-                    paypalContainer.innerHTML = `
-                        <div class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded-md mb-3 text-left">
-                            <strong>Script PayPal diblokir oleh browser/AdBlocker.</strong><br>Gunakan tombol pembayaran manual di bawah ini.
-                        </div>
-                        <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="w-full mb-3">
-                            <input type="hidden" name="cmd" value="_xclick">
-                            <input type="hidden" name="business" value="sb-94343iz53508758@business.example.com">
-                            <input type="hidden" name="item_name" value="Pixel Ads Space - ${currentTotalBlocks} blocks">
-                            <input type="hidden" name="amount" value="${currentTotalPrice.toFixed(2)}">
-                            <input type="hidden" name="currency_code" value="USD">
-                            <button type="submit" class="w-full py-3 bg-[#003087] hover:bg-[#001c56] text-white font-bold rounded-lg transition-colors flex justify-center items-center">
-                                Checkout
-                            </button>
-                        </form>
-                        <button onclick="document.getElementById('btn-bypass-payment').click()" class="w-full py-2 text-xs font-medium text-blue-600 hover:underline">
-                            Saya sudah transfer (Lanjut pasang iklan)
-                        </button>
-                    `;
-                }
-
-                openModal('modal-payment');
-            });
-
-            document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
-
-            document.getElementById('btn-bypass-payment').addEventListener('click', () => {
-                closeModal('modal-payment');
-                showToast("Pembayaran dilewati (Mode Developer)", "success");
-                document.getElementById('ad-image').value = '';
-                document.getElementById('ad-text').value = '';
-                document.getElementById('ad-link').value = '';
-                setTimeout(() => openModal('modal-content'), 500);
-            });
-        }
-
         window.openModal = (id) => {
             const modal = document.getElementById(id);
             const inner = modal.querySelector('div');
@@ -647,7 +841,7 @@
 
             const adData = {
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
-                text: text, link: link, imageUrl: imageUrl, color: randomColor
+                text: text, link: link, imageUrl: imageUrl, color: randomColor, owner: currentUser ? currentUser.name : "Guest"
             };
 
             ads.push(adData);
