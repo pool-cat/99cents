@@ -33,7 +33,7 @@
         ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         #tooltip { pointer-events: none; transition: opacity 0.2s; }
-        #paypal-button-container { position: relative; z-index: 10; min-height: 150px; }
+        #paypal-button-container { position: relative; z-index: 10; min-height: 120px; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
@@ -179,21 +179,25 @@
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800" data-i18n="secure_checkout">Checkout Aman</h2>
+                <h2 class="text-xl font-bold text-gray-800" data-i18n="secure_checkout">Secure Checkout</h2>
                 <button onclick="closeModal('modal-payment')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             
             <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Tagihan</p>
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
             </div>
 
-            <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-5 text-left" data-i18n="sim_note">
-                Selesaikan pembayaran melalui PayPal di bawah. Setelah terkonfirmasi oleh sistem, Anda akan diarahkan untuk mengunggah iklan.
-            </div>
-
+            <!-- Kontainer Tombol PayPal / Fallback -->
             <div id="paypal-button-container" class="w-full flex justify-center items-center flex-col"></div>
             
+            <!-- Tombol Lanjut Manual (Muncul otomatis jika SDK gagal/diblokir) -->
+            <div id="manual-checkout-container" class="w-full mt-3 hidden">
+                <button id="btn-manual-success" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
+                    Bayar via PayPal & Lanjut
+                </button>
+            </div>
+
             <div id="admin-bypass-container" class="w-full mt-3 hidden">
                 <button id="btn-bypass-payment" class="w-full py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
                     [Admin Mode] Lewati Pembayaran
@@ -239,7 +243,6 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
-        // KONFIGURASI SUPABASE CLOUD
         const SUPABASE_URL = 'https://dnymbpjcqeupvexxkkai.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NK3blpaL1GM8puCldwrwCQ_P6SZnYjk';
         
@@ -274,8 +277,8 @@
                 ad_link: "Tautan Web URL",
                 btn_cancel: "Batal",
                 btn_publish: "Pasang Iklan",
-                secure_checkout: "Checkout Aman",
-                total_due: "Total Tagihan",
+                secure_checkout: "Secure Checkout",
+                total_due: "Total Due",
                 sim_note: "Selesaikan pembayaran melalui PayPal di bawah. Setelah terkonfirmasi oleh sistem, Anda akan diarahkan untuk mengunggah iklan.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
@@ -317,7 +320,7 @@
                 msg_upload_req: "Please upload an image or enter text.",
                 msg_pub_success: "Ad successfully published to cloud!",
                 blocks: "blocks",
-                tooltip_link: "Click to visit link"
+                tooltip_link: "Klik untuk mengunjungi link"
             }
         };
 
@@ -532,41 +535,57 @@
                 paymentAmountText.innerText = formatCurrency(currentTotalPrice);
                 
                 const paypalContainer = document.getElementById('paypal-button-container');
+                const manualContainer = document.getElementById('manual-checkout-container');
                 paypalContainer.innerHTML = ''; 
+                manualContainer.classList.add('hidden');
+
+                let paypalLoaded = false;
                 
                 if (window.paypal) {
-                    paypal.Buttons({
-                        style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
-                        createOrder: function(data, actions) {
-                            return actions.order.create({
-                                purchase_units: [{
-                                    amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
-                                    description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
-                                }]
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            return actions.order.capture().then(function(details) {
-                                closeModal('modal-payment');
-                                showToast(t('msg_pay_success'), "success");
-                                document.getElementById('ad-image').value = '';
-                                document.getElementById('ad-text').value = '';
-                                document.getElementById('ad-link').value = '';
-                                setTimeout(() => openModal('modal-content'), 500);
-                            }).catch(err => {
-                                console.error('Error capture:', err);
-                                showToast("Gagal memproses pembayaran sistem.", "error");
-                            });
-                        },
-                        onCancel: function (data) {
-                            showToast("Pembayaran dibatalkan.", "info");
-                        },
-                        onError: function(err) {
-                            console.error('PayPal Error:', err);
-                            showToast("Transaksi ditolak.", "error");
-                        }
-                    }).render('#paypal-button-container');
+                    try {
+                        paypal.Buttons({
+                            style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
+                            createOrder: function(data, actions) {
+                                return actions.order.create({
+                                    purchase_units: [{
+                                        amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
+                                        description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                    }]
+                                });
+                            },
+                            onApprove: function(data, actions) {
+                                return actions.order.capture().then(function(details) {
+                                    closeModal('modal-payment');
+                                    showToast(t('msg_pay_success'), "success");
+                                    document.getElementById('ad-image').value = '';
+                                    document.getElementById('ad-text').value = '';
+                                    document.getElementById('ad-link').value = '';
+                                    setTimeout(() => openModal('modal-content'), 500);
+                                });
+                            },
+                            onCancel: function (data) {
+                                showToast("Pembayaran dibatalkan.", "info");
+                            },
+                            onError: function(err) {
+                                console.error('PayPal Error:', err);
+                                manualContainer.classList.remove('hidden');
+                            }
+                        }).render('#paypal-button-container').then(() => {
+                            paypalLoaded = true;
+                        }).catch(() => {
+                            manualContainer.classList.remove('hidden');
+                        });
+                    } catch (e) {
+                        manualContainer.classList.remove('hidden');
+                    }
                 }
+
+                // Fallback jika dalam 2 detik tombol PayPal gagal muncul
+                setTimeout(() => {
+                    if (paypalContainer.children.length === 0) {
+                        manualContainer.classList.remove('hidden');
+                    }
+                }, 2000);
 
                 const adminBypassContainer = document.getElementById('admin-bypass-container');
                 if (currentUser && (currentUser.role === 'admin' || currentUser.email === '99Cents Space')) {
@@ -576,6 +595,15 @@
                 }
 
                 openModal('modal-payment');
+            });
+
+            document.getElementById('btn-manual-success').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(t('msg_pay_success'), "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 500);
             });
 
             document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
