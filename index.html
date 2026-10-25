@@ -65,7 +65,7 @@
         </div>
 
         <div class="px-5 py-3 border-b bg-gray-50">
-            <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda secara permanen.</p>
+            <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda selama 1 bulan.</p>
         </div>
 
         <div class="p-5 flex-1 flex flex-col gap-5">
@@ -83,7 +83,7 @@
                     <span class="text-gray-600" data-i18n="price_per_block">Harga per Blok:</span>
                     <span class="font-bold text-green-600">$0.99</span>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* 1 blok = 20x20 pixels.</p>
+                <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* Aktif tampil selama 30 hari (1 bulan).</p>
             </div>
 
             <!-- Panel Khusus Admin -->
@@ -100,7 +100,7 @@
                     <li data-i18n="inst_1">Geser kursor di area papan/canvas.</li>
                     <li><strong data-i18n="inst_2_bold">Klik & seret (drag)</strong> <span data-i18n="inst_2">untuk memilih area.</span></li>
                     <li data-i18n="inst_3">Pastikan area bebas (tidak menabrak iklan lain).</li>
-                    <li data-i18n="inst_4">Checkout pembayaran lalu pasang gambar Anda.</li>
+                    <li data-i18n="inst_4">Checkout pembayaran lalu pasang gambar Anda (aktif 30 hari).</li>
                 </ol>
             </div>
 
@@ -130,6 +130,7 @@
         <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
             <p id="tooltip-text" class="font-semibold">Text</p>
             <p id="tooltip-link" class="text-blue-300">Link</p>
+            <p id="tooltip-expiry" class="text-gray-300 text-[10px]">Expiry</p>
         </div>
     </main>
 
@@ -185,6 +186,7 @@
             <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
+                <p class="text-[11px] text-green-600 mt-1 font-medium">✓ Aktif tampil selama 30 hari</p>
             </div>
 
             <!-- Kontainer Tombol Resmi PayPal SDK -->
@@ -260,12 +262,12 @@
 
         const i18nData = {
             id: {
-                subtitle: "Beli ruang pixel untuk iklan Anda secara permanen.",
+                subtitle: "Beli ruang pixel untuk iklan Anda selama 1 bulan.",
                 status_board: "Status Papan",
                 sold: "Terjual:",
                 available: "Tersedia:",
                 price_per_block: "Harga per Blok:",
-                note_block: "* 1 blok = 20x20 pixels.",
+                note_block: "* Aktif tampil selama 30 hari (1 bulan).",
                 instruction: "Instruksi:",
                 inst_1: "Geser kursor di area papan/canvas.",
                 inst_2_bold: "Klik & seret (drag)",
@@ -284,22 +286,22 @@
                 btn_publish: "Pasang Iklan",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Selesaikan pembayaran melalui PayPal di bawah.",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
                 msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi!",
                 msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
-                msg_pub_success: "Iklan berhasil dipublikasikan ke cloud!",
+                msg_pub_success: "Iklan berhasil dipublikasikan (Aktif 30 hari)!",
                 blocks: "blok",
-                tooltip_link: "Klik untuk mengunjungi link"
+                tooltip_link: "Klik untuk mengunjungi link",
+                expires_in: "Aktif sampai:"
             },
             en: {
-                subtitle: "Buy pixel space for your ad permanently.",
+                subtitle: "Buy pixel space for your ad for 1 month.",
                 status_board: "Board Status",
                 sold: "Sold:",
                 available: "Available:",
                 price_per_block: "Price per Block:",
-                note_block: "* 1 block = 20x20 pixels.",
+                note_block: "* Active for 30 days (1 month).",
                 instruction: "Instructions:",
                 inst_1: "Hover over the canvas area.",
                 inst_2_bold: "Click & drag",
@@ -318,14 +320,14 @@
                 btn_publish: "Publish Ad",
                 secure_checkout: "Secure Checkout",
                 total_due: "Total Due",
-                sim_note: "Complete your payment via PayPal below.",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
                 msg_pay_success: "Payment Successful & Confirmed!",
                 msg_upload_req: "Please upload an image or enter text.",
-                msg_pub_success: "Ad successfully published to cloud!",
+                msg_pub_success: "Ad successfully published (Active 30 days)!",
                 blocks: "blocks",
-                tooltip_link: "Click to visit link"
+                tooltip_link: "Click to visit link",
+                expires_in: "Expires on:"
             }
         };
 
@@ -397,6 +399,7 @@
         const tooltip = document.getElementById('tooltip');
         const tooltipText = document.getElementById('tooltip-text');
         const tooltipLink = document.getElementById('tooltip-link');
+        const tooltipExpiry = document.getElementById('tooltip-expiry');
         const paymentAmountText = document.getElementById('payment-amount');
 
         const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
@@ -434,10 +437,17 @@
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.from('ads').select('*');
             if (!error && data) {
-                ads = data.map(item => ({
+                const now = new Date();
+                // Filter hanya iklan yang belum expired (expires_at > sekarang, atau jika expires_at null dianggap aktif)
+                ads = data.filter(item => {
+                    if (!item.expires_at) return true;
+                    return new Date(item.expires_at) > now;
+                }).map(item => ({
                     x: item.x, y: item.y, w: item.w, h: item.h,
-                    text: item.text, link: item.link, imageUrl: item.image_url, color: '#3b82f6'
+                    text: item.text, link: item.link, imageUrl: item.image_url, 
+                    expiresAt: item.expires_at, color: '#3b82f6'
                 }));
+
                 for (let ad of ads) {
                     if (ad.imageUrl && !cachedImages[ad.imageUrl]) {
                         await new Promise((resolve) => {
@@ -577,7 +587,7 @@
                                 return actions.order.create({
                                     purchase_units: [{
                                         amount: { currency_code: 'USD', value: currentTotalPrice.toFixed(2) },
-                                        description: `Pixel Ads Space - ${currentTotalBlocks} blocks`
+                                        description: `Pixel Ads Space - ${currentTotalBlocks} blocks (30 days)`
                                     }]
                                 });
                             },
@@ -759,6 +769,12 @@
                             tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px';
                             tooltipText.innerText = hoveredAd.text || "Pixel Ad";
                             tooltipLink.innerText = hoveredAd.link ? t('tooltip_link') : "";
+                            if (hoveredAd.expiresAt) {
+                                const expDate = new Date(hoveredAd.expiresAt).toLocaleDateString();
+                                tooltipExpiry.innerText = `${t('expires_in')} ${expDate}`;
+                            } else {
+                                tooltipExpiry.innerText = "";
+                            }
                             canvas.style.cursor = "pointer";
                         } else {
                             tooltip.style.opacity = '0'; canvas.style.cursor = "crosshair";
@@ -885,9 +901,15 @@
                 }
             }
 
+            // Hitung tanggal kedaluwarsa 30 hari (1 bulan) dari sekarang
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+
             const newAd = {
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
-                text: text, link: link, image_url: imageUrl, user_email: currentUser ? (currentUser.email || currentUser.name) : "guest"
+                text: text, link: link, image_url: imageUrl, 
+                expires_at: expiresAt.toISOString(),
+                user_email: currentUser ? (currentUser.email || currentUser.name) : "guest"
             };
 
             if (supabaseClient) {
@@ -900,7 +922,8 @@
 
             ads.push({
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h,
-                text: text, link: link, imageUrl: imageUrl, color: randomColor
+                text: text, link: link, imageUrl: imageUrl, 
+                expiresAt: expiresAt.toISOString(), color: randomColor
             });
             
             showToast(t('msg_pub_success'), "success");
