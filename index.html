@@ -44,7 +44,7 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm" data-i18n="btn_login">
                     Masuk
                 </button>
                 
@@ -61,7 +61,7 @@
         <!-- Status User Login Cloud -->
         <div id="user-status-bar" class="px-5 py-2 bg-blue-50 border-b border-blue-100 flex justify-between items-center hidden">
             <span class="text-xs text-blue-800 font-medium truncate" id="user-welcome-text">Halo, User</span>
-            <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold">Keluar</button>
+            <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold" data-i18n="btn_logout">Keluar</button>
         </div>
 
         <div class="px-5 py-3 border-b bg-gray-50">
@@ -86,12 +86,20 @@
                 <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* Aktif tampil selama 30 hari (1 bulan).</p>
             </div>
 
+            <!-- Kotak Informasi Iklan Pengguna -->
+            <div id="user-ads-panel" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hidden">
+                <h2 class="font-semibold text-blue-900 text-sm mb-2" data-i18n="my_ads">Iklan Aktif Saya</h2>
+                <div id="user-ads-list" class="space-y-3 max-h-48 overflow-y-auto pr-1">
+                    <!-- Dynamic user ads info injected here -->
+                </div>
+            </div>
+
             <!-- Panel Khusus Admin -->
             <div id="admin-panel-section" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
-                <h2 class="font-semibold text-amber-800 text-sm mb-1">Panel Admin</h2>
-                <p class="text-xs text-amber-700 mb-2">Link PayPal.Me Anda:</p>
+                <h2 class="font-semibold text-amber-800 text-sm mb-1" data-i18n="admin_panel">Panel Admin</h2>
+                <p class="text-xs text-amber-700 mb-2" data-i18n="admin_paypal_label">Link PayPal.Me Anda:</p>
                 <input type="text" id="admin-paypal-link" value="https://paypal.me/99Centscents" class="w-full text-xs p-2 border border-amber-300 rounded mb-2 bg-white">
-                <button id="btn-save-paypal-link" class="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 rounded transition-colors">Simpan Link</button>
+                <button id="btn-save-paypal-link" class="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 rounded transition-colors" data-i18n="btn_save_link">Simpan Link</button>
             </div>
 
             <div class="flex-1">
@@ -100,7 +108,7 @@
                     <li data-i18n="inst_1">Geser kursor di area papan/canvas.</li>
                     <li><strong data-i18n="inst_2_bold">Klik & seret (drag)</strong> <span data-i18n="inst_2">untuk memilih area.</span></li>
                     <li data-i18n="inst_3">Pastikan area bebas (tidak menabrak iklan lain).</li>
-                    <li data-i18n="inst_4">Checkout pembayaran lalu pasang gambar Anda (aktif 30 hari).</li>
+                    <li data-i18n="inst_4">Checkout pembayaran lalu pasang gambar Anda.</li>
                 </ol>
             </div>
 
@@ -139,36 +147,36 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 transform scale-95 transition-transform duration-300 relative">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex gap-4 border-b pb-2 w-full">
-                    <button id="tab-login-btn" class="font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1">Masuk</button>
-                    <button id="tab-register-btn" class="font-semibold text-gray-400 text-base pb-1">Daftar Akun</button>
+                    <button id="tab-login-btn" class="font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1" data-i18n="modal_login">Masuk</button>
+                    <button id="tab-register-btn" class="font-semibold text-gray-400 text-base pb-1" data-i18n="modal_register">Daftar Akun</button>
                 </div>
                 <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
             </div>
 
             <form id="form-login" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Email / Username</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email / Username</label>
                     <input type="text" id="login-email" required placeholder="email@domain.com atau Admin" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Kata Sandi</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
                     <input type="password" id="login-pass" required placeholder="••••••••" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_login">
                     Masuk Sekarang
                 </button>
             </form>
 
             <form id="form-register" class="space-y-3 hidden">
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email</label>
                     <input type="email" id="reg-email" required placeholder="email@domain.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Kata Sandi</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
                     <input type="password" id="reg-pass" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm">
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_register">
                     Daftar Akun Baru
                 </button>
             </form>
@@ -186,7 +194,7 @@
             <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
                 <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
-                <p class="text-[11px] text-green-600 mt-1 font-medium">✓ Aktif tampil selama 30 hari</p>
+                <p class="text-[11px] text-green-600 mt-1 font-medium" data-i18n="active_30_days">✓ Aktif tampil selama 30 hari</p>
             </div>
 
             <!-- Kontainer Tombol Resmi PayPal SDK -->
@@ -196,17 +204,17 @@
             <div class="w-full space-y-2 mb-2">
                 <a id="paypal-me-btn" href="https://paypal.me/99Centscents" target="_blank" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-medium py-2.5 px-4 rounded-lg text-xs transition-colors shadow flex items-center justify-center gap-2">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.022.382 5.47 0 5.996 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.026-.64 3.282-2.583 5.426-5.59 5.426H11.23l-1.34 8.572a.641.641 0 0 1-.634.544h-2.18z"/></svg>
-                    Buka Link Pembayaran PayPal.Me
+                    <span data-i18n="open_paypal_me">Buka Link Pembayaran PayPal.Me</span>
                 </a>
 
-                <!-- Tombol Konfirmasi (AWALNYA DISIMPAN/HIDDEN, MUNCUL SETELAH KLIK BAYAR) -->
-                <button id="btn-confirm-payment" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow hidden">
+                <!-- Tombol Konfirmasi -->
+                <button id="btn-confirm-payment" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow hidden" data-i18n="btn_confirm_paid">
                     Sudah Bayar, Lanjut ke Upload Iklan &rarr;
                 </button>
             </div>
 
             <div id="admin-bypass-container" class="w-full mt-2 hidden">
-                <button id="btn-bypass-payment" class="w-full py-1.5 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors">
+                <button id="btn-bypass-payment" class="w-full py-1.5 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors" data-i18n="admin_bypass">
                     [Admin Mode] Lewati Pembayaran
                 </button>
             </div>
@@ -262,12 +270,17 @@
 
         const i18nData = {
             id: {
+                btn_login: "Masuk",
+                btn_logout: "Keluar",
                 subtitle: "Beli ruang pixel untuk iklan Anda selama 1 bulan.",
                 status_board: "Status Papan",
                 sold: "Terjual:",
                 available: "Tersedia:",
                 price_per_block: "Harga per Blok:",
                 note_block: "* Aktif tampil selama 30 hari (1 bulan).",
+                admin_panel: "Panel Admin",
+                admin_paypal_label: "Link PayPal.Me Anda:",
+                btn_save_link: "Simpan Link",
                 instruction: "Instruksi:",
                 inst_1: "Geser kursor di area papan/canvas.",
                 inst_2_bold: "Klik & seret (drag)",
@@ -278,14 +291,26 @@
                 size: "Ukuran:",
                 total_price: "Total Harga:",
                 proceed_payment: "Lanjut ke Pembayaran",
+                modal_login: "Masuk",
+                modal_register: "Daftar Akun",
+                lbl_email: "Email / Username",
+                lbl_pass: "Kata Sandi",
+                btn_submit_login: "Masuk Sekarang",
+                btn_submit_register: "Daftar Akun Baru",
+                secure_checkout: "Secure Checkout",
+                total_due: "Total Due",
+                active_30_days: "✓ Aktif tampil selama 30 hari",
+                open_paypal_me: "Buka Link Pembayaran PayPal.Me",
+                btn_confirm_paid: "Sudah Bayar, Lanjut ke Upload Iklan →",
+                admin_bypass: "[Admin Mode] Lewati Pembayaran",
                 ad_details: "Detail Iklan Anda",
                 upload_img: "Unggah Gambar Iklan",
                 ad_text: "Teks/Judul Iklan",
                 ad_link: "Tautan Web URL",
+                ad_text_ph: "Cth: Sewa Mobil Jakarta",
+                ad_link_ph: "https://www.websiteanda.com",
                 btn_cancel: "Batal",
                 btn_publish: "Pasang Iklan",
-                secure_checkout: "Secure Checkout",
-                total_due: "Total Due",
                 msg_collision: "Area bertabrakan dengan iklan lain!",
                 msg_empty: "Pilih area kosong terlebih dahulu.",
                 msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi!",
@@ -293,15 +318,25 @@
                 msg_pub_success: "Iklan berhasil dipublikasikan (Aktif 30 hari)!",
                 blocks: "blok",
                 tooltip_link: "Klik untuk mengunjungi link",
-                expires_in: "Aktif sampai:"
+                expires_in: "Aktif sampai:",
+                my_ads: "Iklan Aktif Saya",
+                purchase_date: "Tanggal Pembelian:",
+                total_boxes: "Jumlah Kotak:",
+                expires_on: "Berakhir Pada:",
+                no_active_ads: "Belum ada iklan aktif yang Anda pasang."
             },
             en: {
+                btn_login: "Sign In",
+                btn_logout: "Sign Out",
                 subtitle: "Buy pixel space for your ad for 1 month.",
                 status_board: "Board Status",
                 sold: "Sold:",
                 available: "Available:",
                 price_per_block: "Price per Block:",
                 note_block: "* Active for 30 days (1 month).",
+                admin_panel: "Admin Panel",
+                admin_paypal_label: "Your PayPal.Me Link:",
+                btn_save_link: "Save Link",
                 instruction: "Instructions:",
                 inst_1: "Hover over the canvas area.",
                 inst_2_bold: "Click & drag",
@@ -312,14 +347,26 @@
                 size: "Size:",
                 total_price: "Total Price:",
                 proceed_payment: "Proceed to Payment",
-                ad_details: "Ad Details",
+                modal_login: "Sign In",
+                modal_register: "Register",
+                lbl_email: "Email / Username",
+                lbl_pass: "Password",
+                btn_submit_login: "Sign In Now",
+                btn_submit_register: "Create New Account",
+                secure_checkout: "Secure Checkout",
+                total_due: "Total Due",
+                active_30_days: "✓ Active for 30 days",
+                open_paypal_me: "Open PayPal.Me Payment Link",
+                btn_confirm_paid: "Paid, Proceed to Ad Upload →",
+                admin_bypass: "[Admin Mode] Skip Payment",
+                ad_details: "Your Ad Details",
                 upload_img: "Upload Ad Image",
                 ad_text: "Ad Text/Title",
                 ad_link: "Web URL Link",
+                ad_text_ph: "e.g. Jakarta Car Rental",
+                ad_link_ph: "https://www.yourwebsite.com",
                 btn_cancel: "Cancel",
                 btn_publish: "Publish Ad",
-                secure_checkout: "Secure Checkout",
-                total_due: "Total Due",
                 msg_collision: "Area overlaps with another ad!",
                 msg_empty: "Please select an empty area first.",
                 msg_pay_success: "Payment Successful & Confirmed!",
@@ -327,12 +374,17 @@
                 msg_pub_success: "Ad successfully published (Active 30 days)!",
                 blocks: "blocks",
                 tooltip_link: "Click to visit link",
-                expires_in: "Expires on:"
+                expires_in: "Expires on:",
+                my_ads: "My Active Ads",
+                purchase_date: "Purchase Date:",
+                total_boxes: "Total Boxes:",
+                expires_on: "Expires On:",
+                no_active_ads: "No active ads placed yet."
             }
         };
 
         let currentLang = 'id';
-        const t = (key) => i18nData[currentLang][key];
+        const t = (key) => i18nData[currentLang][key] || key;
 
         function applyLanguage() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -438,14 +490,16 @@
             const { data, error } = await supabaseClient.from('ads').select('*');
             if (!error && data) {
                 const now = new Date();
-                // Filter hanya iklan yang belum expired (expires_at > sekarang, atau jika expires_at null dianggap aktif)
                 ads = data.filter(item => {
                     if (!item.expires_at) return true;
                     return new Date(item.expires_at) > now;
                 }).map(item => ({
                     x: item.x, y: item.y, w: item.w, h: item.h,
                     text: item.text, link: item.link, imageUrl: item.image_url, 
-                    expiresAt: item.expires_at, color: '#3b82f6'
+                    createdAt: item.created_at,
+                    expiresAt: item.expires_at,
+                    userEmail: item.user_email,
+                    color: '#3b82f6'
                 }));
 
                 for (let ad of ads) {
@@ -495,12 +549,12 @@
                     currentUser = { email: "99Cents Space", role: "admin" };
                     closeModal('modal-auth');
                     updateAuthUI();
-                    showToast("Login Berhasil sebagai Admin!", "success");
+                    showToast(currentLang === 'id' ? "Login Berhasil sebagai Admin!" : "Successfully logged in as Admin!", "success");
                     return;
                 }
 
                 if (!supabaseClient) {
-                    showToast("Harap atur kredensial Supabase terlebih dahulu.", "error");
+                    showToast("Harap atur kredensial Supabase.", "error");
                     return;
                 }
 
@@ -511,7 +565,7 @@
                     currentUser = data.user;
                     closeModal('modal-auth');
                     updateAuthUI();
-                    showToast("Login Berhasil!", "success");
+                    showToast(currentLang === 'id' ? "Login Berhasil!" : "Login Successful!", "success");
                 }
             });
 
@@ -521,7 +575,7 @@
                 const pass = document.getElementById('reg-pass').value;
 
                 if (!supabaseClient) {
-                    showToast("Harap atur kredensial Supabase terlebih dahulu.", "error");
+                    showToast("Harap atur kredensial Supabase.", "error");
                     return;
                 }
 
@@ -529,7 +583,7 @@
                 if (error) {
                     showToast(error.message, "error");
                 } else {
-                    showToast("Pendaftaran berhasil! Silakan masuk.", "success");
+                    showToast(currentLang === 'id' ? "Pendaftaran berhasil! Silakan masuk." : "Registration successful! Please sign in.", "success");
                     tabLoginBtn.click();
                 }
             });
@@ -538,7 +592,7 @@
                 if (supabaseClient) await supabaseClient.auth.signOut();
                 currentUser = null;
                 updateAuthUI();
-                showToast("Berhasil keluar akun.", "info");
+                showToast(currentLang === 'id' ? "Berhasil keluar akun." : "Signed out successfully.", "info");
             });
 
             document.getElementById('btn-save-paypal-link').addEventListener('click', () => {
@@ -548,12 +602,12 @@
                     return;
                 }
                 localStorage.setItem('user_paypal_link', linkVal);
-                showToast("Link PayPal berhasil disimpan!", "success");
+                showToast(currentLang === 'id' ? "Link PayPal berhasil disimpan!" : "PayPal link saved successfully!", "success");
             });
 
             document.getElementById('btn-init-payment').addEventListener('click', () => {
                 if (!currentUser) {
-                    showToast("Silakan masuk terlebih dahulu untuk membeli ruang iklan.", "error");
+                    showToast(currentLang === 'id' ? "Silakan masuk terlebih dahulu untuk membeli ruang iklan." : "Please sign in first to purchase ad space.", "error");
                     openModal('modal-auth');
                     return;
                 }
@@ -602,7 +656,7 @@
                                 });
                             },
                             onCancel: function (data) {
-                                showToast("Pembayaran dibatalkan.", "info");
+                                showToast(currentLang === 'id' ? "Pembayaran dibatalkan." : "Payment cancelled.", "info");
                             },
                             onError: function(err) {
                                 console.error('PayPal SDK Error:', err);
@@ -635,7 +689,7 @@
             document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
             document.getElementById('btn-bypass-payment').addEventListener('click', () => {
                 closeModal('modal-payment');
-                showToast("Pembayaran dilewati (Mode Admin)", "success");
+                showToast(currentLang === 'id' ? "Pembayaran dilewati (Mode Admin)" : "Payment skipped (Admin Mode)", "success");
                 document.getElementById('ad-image').value = '';
                 document.getElementById('ad-text').value = '';
                 document.getElementById('ad-link').value = '';
@@ -648,6 +702,7 @@
             const userStatusBar = document.getElementById('user-status-bar');
             const userWelcomeText = document.getElementById('user-welcome-text');
             const adminPanelSection = document.getElementById('admin-panel-section');
+            const userAdsPanel = document.getElementById('user-ads-panel');
 
             if (currentUser) {
                 btnOpenAuth.classList.add('hidden');
@@ -660,11 +715,53 @@
                 } else {
                     adminPanelSection.classList.add('hidden');
                 }
+                userAdsPanel.classList.remove('hidden');
+                renderUserAds();
             } else {
                 btnOpenAuth.classList.remove('hidden');
                 userStatusBar.classList.add('hidden');
                 adminPanelSection.classList.add('hidden');
+                userAdsPanel.classList.add('hidden');
             }
+        }
+
+        function renderUserAds() {
+            const userAdsList = document.getElementById('user-ads-list');
+            if (!userAdsList) return;
+            userAdsList.innerHTML = '';
+
+            const emailName = currentUser ? (currentUser.email || currentUser.name) : '';
+            const userAds = ads.filter(ad => ad.userEmail === emailName || (emailName === '99Cents Space' && ad.userEmail === 'guest'));
+
+            if (userAds.length === 0) {
+                userAdsList.innerHTML = `<p class="text-xs text-gray-500 italic">${t('no_active_ads')}</p>`;
+                return;
+            }
+
+            userAds.forEach((ad, index) => {
+                const totalBlocks = ad.w * ad.h;
+                const createdDate = ad.createdAt ? new Date(ad.createdAt).toLocaleString() : '-';
+                const expiresDate = ad.expiresAt ? new Date(ad.expiresAt).toLocaleString() : '-';
+                
+                const card = document.createElement('div');
+                card.className = "bg-white p-2.5 rounded border border-blue-200 text-xs shadow-sm space-y-1";
+                card.innerHTML = `
+                    <div class="font-semibold text-blue-900 truncate">#${index + 1} - ${ad.text || 'Pixel Ad'}</div>
+                    <div class="text-gray-600 flex justify-between">
+                        <span data-i18n="purchase_date">${t('purchase_date')}</span>
+                        <span class="font-medium text-gray-900">${createdDate}</span>
+                    </div>
+                    <div class="text-gray-600 flex justify-between">
+                        <span data-i18n="total_boxes">${t('total_boxes')}</span>
+                        <span class="font-medium text-gray-900">${totalBlocks} ${t('blocks')} (${ad.w}x${ad.h})</span>
+                    </div>
+                    <div class="text-gray-600 flex justify-between pt-1 border-t border-gray-100">
+                        <span data-i18n="expires_on" class="text-red-600 font-medium">${t('expires_on')}</span>
+                        <span class="font-semibold text-red-600">${expiresDate}</span>
+                    </div>
+                `;
+                userAdsList.appendChild(card);
+            });
         }
 
         function calculateStats() {
@@ -901,13 +998,14 @@
                 }
             }
 
-            // Hitung tanggal kedaluwarsa 30 hari (1 bulan) dari sekarang
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 30);
 
+            const createdAt = new Date();
             const newAd = {
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
                 text: text, link: link, image_url: imageUrl, 
+                created_at: createdAt.toISOString(),
                 expires_at: expiresAt.toISOString(),
                 user_email: currentUser ? (currentUser.email || currentUser.name) : "guest"
             };
@@ -923,7 +1021,10 @@
             ads.push({
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h,
                 text: text, link: link, imageUrl: imageUrl, 
-                expiresAt: expiresAt.toISOString(), color: randomColor
+                createdAt: createdAt.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+                userEmail: currentUser ? (currentUser.email || currentUser.name) : "guest",
+                color: randomColor
             });
             
             showToast(t('msg_pub_success'), "success");
@@ -932,6 +1033,7 @@
             updateSelectionUI(); 
             calculateStats();
             drawCanvas();
+            if (currentUser) renderUserAds();
         }
 
         function processImageFile(file, targetWidth, targetHeight) {
