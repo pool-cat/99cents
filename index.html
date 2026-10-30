@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- SEO Meta Tags Utama -->
     <title>Pixel Ads - Beli Ruang Iklan 1 Juta Pixel & Promosi Online</title>
-    <meta name="description" content="Plaatform pixel advertising tempat Anda dapat membeli ruang iklan pixel grid interaktif untuk mempromosikan website, produk, atau bisnis Anda secara online selama 1 bulan penuh.">
+    <meta name="description" content="Platform pixel advertising tempat Anda dapat membeli ruang iklan pixel grid interaktif untuk mempromosikan website, produk, atau bisnis Anda secara online selama 1 bulan penuh.">
     <meta name="keywords" content="pixel ads, pasang iklan murah, sewa ruang iklan, 99cents ads, pixel advertising website">
     <meta name="author" content="99Cents Space">
 
@@ -282,6 +282,11 @@
             </div>
             
             <div class="space-y-4">
+                <div id="receipt-upload-section">
+                    <label class="block text-sm font-medium text-red-700 mb-1" data-i18n="upload_receipt">Unggah Bukti Pembayaran (Wajib)</label>
+                    <input type="file" id="payment-receipt" accept="image/*,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 border border-gray-300 rounded-md">
+                    <p class="text-[10px] text-gray-500 mt-1 italic">*Iklan Anda akan direview oleh admin untuk verifikasi pembayaran.</p>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="upload_img">Unggah Gambar Iklan</label>
                     <input type="file" id="ad-image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
@@ -368,6 +373,8 @@
                 msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi!",
                 msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
                 msg_pub_success: "Iklan berhasil dipublikasikan (Aktif 30 hari)!",
+                upload_receipt: "Unggah Bukti Pembayaran (Wajib)",
+                msg_receipt_req: "Harap unggah bukti pembayaran terlebih dahulu.",
                 blocks: "blok",
                 tooltip_link: "Klik untuk mengunjungi link",
                 expires_in: "Aktif sampai:",
@@ -424,6 +431,8 @@
                 msg_pay_success: "Payment Successful & Confirmed!",
                 msg_upload_req: "Please upload an image or enter text.",
                 msg_pub_success: "Ad successfully published (Active 30 days)!",
+                upload_receipt: "Upload Payment Receipt (Required)",
+                msg_receipt_req: "Please upload your payment receipt first.",
                 blocks: "blocks",
                 tooltip_link: "Click to visit link",
                 expires_in: "Expires on:",
@@ -599,10 +608,12 @@
 
             document.getElementById('btn-confirm-qris').addEventListener('click', () => {
                 closeModal('modal-payment');
-                showToast(currentLang === 'id' ? "Konfirmasi QRIS Diterima! Silakan upload iklan." : "QRIS Confirmation Received!", "success");
+                showToast(currentLang === 'id' ? "Silakan upload bukti pembayaran & materi iklan Anda." : "Please upload payment receipt & ad materials.", "success");
                 document.getElementById('ad-image').value = '';
                 document.getElementById('ad-text').value = '';
                 document.getElementById('ad-link').value = '';
+                document.getElementById('payment-receipt').value = ''; // Reset
+                document.getElementById('receipt-upload-section').classList.remove('hidden'); // Require receipt
                 setTimeout(() => openModal('modal-content'), 500);
             });
             const btnOpenAuth = document.getElementById('btn-open-auth');
@@ -740,6 +751,7 @@
                                     document.getElementById('ad-image').value = '';
                                     document.getElementById('ad-text').value = '';
                                     document.getElementById('ad-link').value = '';
+                                    document.getElementById('receipt-upload-section').classList.add('hidden'); // Hide receipt since auto-paid
                                     setTimeout(() => openModal('modal-content'), 500);
                                 });
                             },
@@ -792,10 +804,12 @@
 
             document.getElementById('btn-confirm-payment').addEventListener('click', () => {
                 closeModal('modal-payment');
-                showToast(t('msg_pay_success'), "success");
+                showToast(currentLang === 'id' ? "Silakan upload bukti pembayaran & materi iklan Anda." : "Please upload payment receipt & ad materials.", "success");
                 document.getElementById('ad-image').value = '';
                 document.getElementById('ad-text').value = '';
                 document.getElementById('ad-link').value = '';
+                document.getElementById('payment-receipt').value = ''; // Reset
+                document.getElementById('receipt-upload-section').classList.remove('hidden'); // Require receipt
                 setTimeout(() => openModal('modal-content'), 500);
             });
 
@@ -806,6 +820,7 @@
                 document.getElementById('ad-image').value = '';
                 document.getElementById('ad-text').value = '';
                 document.getElementById('ad-link').value = '';
+                document.getElementById('receipt-upload-section').classList.add('hidden'); // Hide receipt for admin bypass
                 setTimeout(() => openModal('modal-content'), 500);
             });
         }
@@ -1086,6 +1101,14 @@
 
         async function publishAd() {
             if(!currentSelection) return;
+            
+            // Check Receipt First
+            const receiptInput = document.getElementById('payment-receipt');
+            const receiptSection = document.getElementById('receipt-upload-section');
+            if (!receiptSection.classList.contains('hidden') && receiptInput.files.length === 0) {
+                showToast(t('msg_receipt_req'), "error"); return;
+            }
+
             const text = document.getElementById('ad-text').value.trim();
             const link = document.getElementById('ad-link').value.trim();
             const fileInput = document.getElementById('ad-image');
@@ -1096,7 +1119,17 @@
 
             const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
             let imageUrl = null;
+            let receiptDataUrl = null;
             let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+            if (!receiptSection.classList.contains('hidden') && receiptInput.files.length > 0) {
+                try {
+                    receiptDataUrl = await readFileAsDataURL(receiptInput.files[0]);
+                } catch(e) {
+                    console.error("Gagal membaca bukti pembayaran", e);
+                    showToast("Gagal memproses file bukti pembayaran.", "error"); return;
+                }
+            }
 
             if (fileInput.files && fileInput.files[0]) {
                 try {
@@ -1118,6 +1151,7 @@
             const newAd = {
                 x: rect.x, y: rect.y, w: rect.w, h: rect.h, 
                 text: text, link: link, image_url: imageUrl, 
+                receipt_data: receiptDataUrl, // Menyimpan bukti pembayaran
                 created_at: createdAt.toISOString(),
                 expires_at: expiresAt.toISOString(),
                 user_email: currentUser ? (currentUser.email || currentUser.name) : "guest"
@@ -1147,6 +1181,15 @@
             calculateStats();
             drawCanvas();
             if (currentUser) renderUserAds();
+        }
+
+                function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
 
         function processImageFile(file, targetWidth, targetHeight) {
