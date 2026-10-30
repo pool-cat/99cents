@@ -251,7 +251,7 @@
                         <div class="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Generating QR...</div>
                     </div>
                     
-                    <p class="text-[11px] text-gray-500 mb-4 text-center">NMID: ID2025378199702<br>A/N: 99Cents Space</p>
+                    <p class="text-[11px] text-gray-500 mb-4 text-center font-medium">NMID: ID1026620408843<br>A/N: IKBAL HASANI</p>
 
                     <!-- Tombol Konfirmasi Manual -->
                     <button id="btn-confirm-qris" class="w-full bg-[#4C349C] hover:bg-[#3b277d] text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
@@ -768,10 +768,9 @@
                 const idrAmount = currentTotalPrice * exchangeRate;
                 document.getElementById('payment-amount-idr').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(idrAmount);
 
-                // Generate Static/Dummy QRIS using external API for demo (In real life, this should be an active QRIS image URL)
+                // Menampilkan QRIS Asli
                 const qrisBox = document.getElementById('qris-code-box');
-                const dummyQrisPayload = "00020101021126570011ID.CO.QRIS.WWW01189360091100212345670214ID20253781997020303UMO51440014ID.CO.QRIS.WWW0215ID20253781997020303UMO520459995303360540" + idrAmount.toFixed(0).length + idrAmount.toFixed(0) + "5802ID591399Cents Space6007JAKARTA61051234563041F9C"; // Simplified standard payload
-                qrisBox.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(dummyQrisPayload)}" class="w-48 h-48 mx-auto" alt="QRIS Code">`;
+                qrisBox.innerHTML = `<img src="QRIS 99cents.jpeg" class="w-full max-w-[200px] h-auto mx-auto rounded shadow-sm" alt="QRIS Code IKBAL HASANI">`;
                 
                 // Reset Tabs to PayPal default
                 tabPaypal.click();
