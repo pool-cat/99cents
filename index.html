@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- SEO Meta Tags Utama -->
     <title>Pixel Ads - Beli Ruang Iklan 1 Juta Pixel & Promosi Online</title>
-    <meta name="description" content="Platform pixel advertising tempat Anda dapat membeli ruang iklan pixel grid interaktif untuk mempromosikan website, produk, atau bisnis Anda secara online selama 1 bulan penuh.">
+    <meta name="description" content="Plaatform pixel advertising tempat Anda dapat membeli ruang iklan pixel grid interaktif untuk mempromosikan website, produk, atau bisnis Anda secara online selama 1 bulan penuh.">
     <meta name="keywords" content="pixel ads, pasang iklan murah, sewa ruang iklan, 99cents ads, pixel advertising website">
     <meta name="author" content="99Cents Space">
 
@@ -251,7 +251,7 @@
                         <div class="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Generating QR...</div>
                     </div>
                     
-                    <p class="text-[11px] text-gray-500 mb-4 text-center font-medium">NMID: ID1026620408843<br>A/N: 99 CENTS, LAYANAN PERIKLANAN</p>
+                    <p class="text-[11px] text-gray-500 mb-4 text-center font-medium">NMID: ID1026620408843<br>A/N: 99 CENTS, LAYANAN PERIKLA</p>
 
                     <!-- Tombol Konfirmasi Manual -->
                     <button id="btn-confirm-qris" class="w-full bg-[#4C349C] hover:bg-[#3b277d] text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
@@ -693,7 +693,7 @@
                 showToast(currentLang === 'id' ? "Link PayPal berhasil disimpan!" : "PayPal link saved successfully!", "success");
             });
 
-            document.getElementById('btn-init-payment').addEventListener('click', () => {
+            document.getElementById('btn-init-payment').addEventListener('click', async () => {
                 if (!currentUser) {
                     showToast(currentLang === 'id' ? "Silakan masuk terlebih dahulu untuk membeli ruang iklan." : "Please sign in first to purchase ad space.", "error");
                     openModal('modal-auth');
@@ -763,14 +763,27 @@
                 }
 
                 
-                // Calculate IDR amount
-                const exchangeRate = 15800;
+                // Calculate IDR amount (Dynamic Fetch Real-Time API / Live Rate)
+                let exchangeRate = 18144; // Nilai tukar fallback sesuai Google Rate (Oktober 2026)
+                try {
+                    document.getElementById('payment-amount-idr').innerText = "Menghitung...";
+                    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+                    if(res.ok) {
+                        const data = await res.json();
+                        if(data && data.rates && data.rates.IDR) {
+                            exchangeRate = data.rates.IDR; // Update dengan kurs mata uang real-time
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Gagal mengambil kurs live, menggunakan kurs fallback.", err);
+                }
+
                 const idrAmount = currentTotalPrice * exchangeRate;
                 document.getElementById('payment-amount-idr').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(idrAmount);
 
                 // Menampilkan QRIS Asli
                 const qrisBox = document.getElementById('qris-code-box');
-                qrisBox.innerHTML = `<img src="QRIS 99 Cents Space.jpeg" class="w-full max-w-[200px] h-auto mx-auto rounded shadow-sm" alt="QRIS Code 99 CENTS, LAYANAN PERIKLA">`;
+                qrisBox.innerHTML = `<img src="QRIS 99 Cents Space_2.jpeg" class="w-full max-w-[200px] h-auto mx-auto rounded shadow-sm" alt="QRIS Code 99 CENTS, LAYANAN PERIKLA">`;
                 
                 // Reset Tabs to PayPal default
                 tabPaypal.click();
