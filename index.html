@@ -192,41 +192,84 @@
         </div>
     </div>
 
-    <!-- Modal Pembayaran PayPal -->
+        <!-- Modal Pembayaran -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800" data-i18n="secure_checkout">Secure Checkout</h2>
                 <button onclick="closeModal('modal-payment')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             
-            <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
-                <p class="text-3xl font-bold text-gray-900" id="payment-amount">$0.00</p>
-                <p class="text-[11px] text-green-600 mt-1 font-medium" data-i18n="active_30_days">✓ Aktif tampil selama 30 hari</p>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100 flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
+                    <p class="text-2xl font-bold text-gray-900" id="payment-amount">$0.00</p>
+                    <p class="text-[11px] text-green-600 mt-1 font-medium" data-i18n="active_30_days">✓ Aktif tampil selama 30 hari</p>
+                </div>
+                <div class="text-right hidden" id="qris-amount-container">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total (IDR)</p>
+                    <p class="text-xl font-bold text-blue-700" id="payment-amount-idr">Rp 0</p>
+                </div>
             </div>
 
-            <!-- Kontainer Tombol Resmi PayPal SDK -->
-            <div id="paypal-button-container" class="w-full mb-3"></div>
-
-            <!-- Tombol Alternatif PayPal.Me -->
-            <div class="w-full space-y-2 mb-2">
-                <a id="paypal-me-btn" href="https://paypal.me/99Centscents" target="_blank" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-medium py-2.5 px-4 rounded-lg text-xs transition-colors shadow flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.022.382 5.47 0 5.996 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.026-.64 3.282-2.583 5.426-5.59 5.426H11.23l-1.34 8.572a.641.641 0 0 1-.634.544h-2.18z"/></svg>
-                    <span data-i18n="open_paypal_me">Buka Link Pembayaran PayPal.Me</span>
-                </a>
-
-                <!-- Tombol Konfirmasi -->
-                <button id="btn-confirm-payment" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow hidden" data-i18n="btn_confirm_paid">
-                    Sudah Bayar, Lanjut ke Upload Iklan &rarr;
-                </button>
+            <!-- Tab Metode Pembayaran -->
+            <div class="flex gap-2 border-b border-gray-200 mb-4 pb-1">
+                <button id="tab-paypal" class="flex-1 font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 text-sm transition-colors">PayPal</button>
+                <button id="tab-qris" class="flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors">QRIS (IDR)</button>
             </div>
 
-            <div id="admin-bypass-container" class="w-full mt-2 hidden">
+            <!-- Kontainer PayPal -->
+            <div id="container-paypal" class="w-full">
+                <!-- Kontainer Tombol Resmi PayPal SDK -->
+                <div id="paypal-button-container" class="w-full mb-3 min-h-[150px]"></div>
+
+                <!-- Tombol Alternatif PayPal.Me -->
+                <div class="w-full space-y-2 mb-2">
+                    <a id="paypal-me-btn" href="https://paypal.me/99Centscents" target="_blank" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-medium py-2.5 px-4 rounded-lg text-xs transition-colors shadow flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.022.382 5.47 0 5.996 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.026-.64 3.282-2.583 5.426-5.59 5.426H11.23l-1.34 8.572a.641.641 0 0 1-.634.544h-2.18z"/></svg>
+                        <span data-i18n="open_paypal_me">Buka Link Pembayaran PayPal.Me</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Kontainer QRIS -->
+            <div id="container-qris" class="w-full hidden text-left">
+                <div class="bg-[#4C349C] text-white rounded-t-lg p-3 flex justify-between items-center">
+                    <span class="font-semibold text-sm">Pembayaran QRIS</span>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="h-5 bg-white px-1 rounded">
+                </div>
+                
+                <div class="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-white flex flex-col items-center">
+                    <div class="bg-blue-50 border border-blue-100 text-blue-800 text-xs p-3 rounded mb-4 w-full flex gap-2 items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p><strong>Penting:</strong> Scan kode QR ini menggunakan aplikasi m-Banking atau e-Wallet (Gopay, OVO, Dana, LinkAja) Anda. Pastikan nominal sesuai.</p>
+                    </div>
+
+                    <!-- Tempat QR Code akan digenerate -->
+                    <div id="qris-code-box" class="bg-white p-2 border-2 border-dashed border-gray-300 rounded-lg mb-3">
+                        <!-- Placeholder QR Image -->
+                        <div class="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Generating QR...</div>
+                    </div>
+                    
+                    <p class="text-[11px] text-gray-500 mb-4 text-center">NMID: ID2025378199702<br>A/N: 99Cents Space</p>
+
+                    <!-- Tombol Konfirmasi Manual -->
+                    <button id="btn-confirm-qris" class="w-full bg-[#4C349C] hover:bg-[#3b277d] text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
+                        Saya Sudah Bayar via QRIS
+                    </button>
+                </div>
+            </div>
+
+            <div id="admin-bypass-container" class="w-full mt-4 hidden">
                 <button id="btn-bypass-payment" class="w-full py-1.5 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors" data-i18n="admin_bypass">
                     [Admin Mode] Lewati Pembayaran
                 </button>
             </div>
+            
+            <!-- Tombol Konfirmasi PayPal manual (dipindah ke bawah) -->
+            <button id="btn-confirm-payment" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow hidden" data-i18n="btn_confirm_paid">
+                Sudah Bayar via PayPal, Lanjut ke Upload Iklan &rarr;
+            </button>
         </div>
     </div>
 
@@ -526,6 +569,42 @@
         }
 
         function setupUIEvents() {
+
+            // Payment Tabs Logic
+            const tabPaypal = document.getElementById('tab-paypal');
+            const tabQris = document.getElementById('tab-qris');
+            const containerPaypal = document.getElementById('container-paypal');
+            const containerQris = document.getElementById('container-qris');
+            const qrisAmountContainer = document.getElementById('qris-amount-container');
+            const btnConfirmPayment = document.getElementById('btn-confirm-payment');
+
+            tabPaypal.addEventListener('click', () => {
+                tabPaypal.className = "flex-1 font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 text-sm transition-colors";
+                tabQris.className = "flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors";
+                containerPaypal.classList.remove('hidden');
+                containerQris.classList.add('hidden');
+                qrisAmountContainer.classList.add('hidden');
+                
+                // Keep standard confirm button visibility logic based on paypal link click
+            });
+
+            tabQris.addEventListener('click', () => {
+                tabQris.className = "flex-1 font-semibold text-[#4C349C] border-b-2 border-[#4C349C] pb-2 text-sm transition-colors";
+                tabPaypal.className = "flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors";
+                containerPaypal.classList.add('hidden');
+                containerQris.classList.remove('hidden');
+                qrisAmountContainer.classList.remove('hidden');
+                btnConfirmPayment.classList.add('hidden'); // Hide paypal manual confirm button
+            });
+
+            document.getElementById('btn-confirm-qris').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(currentLang === 'id' ? "Konfirmasi QRIS Diterima! Silakan upload iklan." : "QRIS Confirmation Received!", "success");
+                document.getElementById('ad-image').value = '';
+                document.getElementById('ad-text').value = '';
+                document.getElementById('ad-link').value = '';
+                setTimeout(() => openModal('modal-content'), 500);
+            });
             const btnOpenAuth = document.getElementById('btn-open-auth');
             const tabLoginBtn = document.getElementById('tab-login-btn');
             const tabRegisterBtn = document.getElementById('tab-register-btn');
@@ -683,7 +762,20 @@
                     adminBypassContainer.classList.add('hidden');
                 }
 
-                openModal('modal-payment');
+                
+                // Calculate IDR amount
+                const exchangeRate = 15800;
+                const idrAmount = currentTotalPrice * exchangeRate;
+                document.getElementById('payment-amount-idr').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(idrAmount);
+
+                // Generate Static/Dummy QRIS using external API for demo (In real life, this should be an active QRIS image URL)
+                const qrisBox = document.getElementById('qris-code-box');
+                const dummyQrisPayload = "00020101021126570011ID.CO.QRIS.WWW01189360091100212345670214ID20253781997020303UMO51440014ID.CO.QRIS.WWW0215ID20253781997020303UMO520459995303360540" + idrAmount.toFixed(0).length + idrAmount.toFixed(0) + "5802ID591399Cents Space6007JAKARTA61051234563041F9C"; // Simplified standard payload
+                qrisBox.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(dummyQrisPayload)}" class="w-48 h-48 mx-auto" alt="QRIS Code">`;
+                
+                // Reset Tabs to PayPal default
+                tabPaypal.click();
+    openModal('modal-payment');
             });
 
             document.getElementById('btn-confirm-payment').addEventListener('click', () => {
