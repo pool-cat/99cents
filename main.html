@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SEO Meta Tags Utama -->
+    <title>Pixel Ads - Beli Ruang Iklan 1 Juta Pixel & Promosi Online</title>
+    <meta name="description" content="Platform pixel advertising tempat Anda dapat membeli ruang iklan pixel grid interaktif untuk mempromosikan website, produk, atau bisnis Anda secara online selama 1 bulan penuh.">
+    <meta name="keywords" content="pixel ads, pasang iklan murah, sewa ruang iklan, 99cents ads, pixel advertising website">
+    <meta name="author" content="99Cents Space">
+
+    <!-- Open Graph / Media Sosial -->
+    <meta property="og:title" content="Pixel Ads - Beli Ruang Iklan Interaktif">
+    <meta property="og:description" content="Pasang banner dan tautan iklan Anda di grid pixel interaktif selama 30 hari.">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="99cents_logo%20-%20Copy.jpeg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- PAYPAL SDK with User's Official Client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_lL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
+
+    <style>body{font-family:'Inter',sans-serif}#gridCanvas{image-rendering:pixelated;box-shadow:0 10px 30px rgba(0,0,0,.2);background-color:#fff;display:block}::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:#e5e7eb;border-radius:5px}::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:#6b7280}#tooltip{pointer-events:none;transition:opacity .2s}#paypal-button-container{min-height:150px;width:100%}</style>
+</head>
+<body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar / Control Panel -->
+    <aside class="w-full md:w-80 bg-white shadow-xl flex flex-col z-20 shrink-0 h-[45vh] md:h-full relative overflow-y-auto">
+        <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white z-30 shadow-sm">
+            <div class="flex items-center gap-3">
+                <img src="99cents_logo%20-%20Copy.jpeg" alt="Logo" class="h-10 w-auto object-contain rounded-md" onerror="this.style.display='none'">
+                <h1 class="text-xl font-bold text-gray-800 leading-none">Pixel Ads</h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm" data-i18n="btn_login">
+                    Masuk
+                </button>
+                
+                <div class="flex items-center gap-1 cursor-pointer select-none" id="lang-toggle-container">
+                    <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
+                    <div class="relative w-8 h-4 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="switch-bg">
+                        <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0" id="switch-knob"></div>
+                    </div>
+                    <span class="text-xs font-bold text-gray-400 transition-colors" id="lbl-en">EN</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status User Login Cloud -->
+        <div id="user-status-bar" class="px-5 py-2 bg-blue-50 border-b border-blue-100 flex justify-between items-center hidden">
+            <span class="text-xs text-blue-800 font-medium truncate" id="user-welcome-text">Halo, User</span>
+            <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold" data-i18n="btn_logout">Keluar</button>
+        </div>
+
+        <div class="px-5 py-3 border-b bg-gray-50">
+            <p class="text-xs text-gray-500" data-i18n="subtitle">Beli ruang pixel untuk iklan Anda selama 1 bulan.</p>
+        </div>
+
+        <div class="p-5 flex-1 flex flex-col gap-5">
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <h2 class="font-semibold text-blue-800 text-sm mb-2" data-i18n="status_board">Status Papan</h2>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="sold">Terjual:</span>
+                    <span class="font-medium text-gray-900" id="stats-sold">0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="available">Tersedia:</span>
+                    <span class="font-medium text-gray-900" id="stats-available">20.000 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mt-2 pt-2 border-t border-blue-200">
+                    <span class="text-gray-600" data-i18n="price_per_block">Harga per Blok:</span>
+                    <span class="font-bold text-green-600">$0.99</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* Aktif tampil selama 30 hari (1 bulan).</p>
+            </div>
+
+            <!-- Kotak Informasi Iklan Pengguna -->
+            <div id="user-ads-panel" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hidden">
+                <h2 class="font-semibold text-blue-900 text-sm mb-2" data-i18n="my_ads">Iklan Aktif Saya</h2>
+                <div id="user-ads-list" class="space-y-3 max-h-48 overflow-y-auto pr-1">
+                    <!-- Dynamic user ads info injected here -->
+                </div>
+            </div>
+
+            <!-- Panel Khusus Admin -->
+            <div id="admin-panel-section" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
+                <h2 class="font-semibold text-amber-800 text-sm mb-1" data-i18n="admin_panel">Panel Admin</h2>
+                <p class="text-xs text-amber-700 mb-2" data-i18n="admin_paypal_label">Link PayPal.Me Anda:</p>
+                <input type="text" id="admin-paypal-link" value="https://paypal.me/99Centscents" class="w-full text-xs p-2 border border-amber-300 rounded mb-2 bg-white">
+                <button id="btn-save-paypal-link" class="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 rounded transition-colors" data-i18n="btn_save_link">Simpan Link</button>
+            </div>
+
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-800 mb-2 text-sm" data-i18n="instruction">Instruksi:</h3>
+                <ol class="list-decimal pl-5 text-xs text-gray-600 space-y-1.5">
+                    <li data-i18n="inst_1">Geser kursor di area papan/canvas.</li>
+                    <li><strong data-i18n="inst_2_bold">Klik & seret (drag)</strong> <span data-i18n="inst_2">untuk memilih area.</span></li>
+                    <li data-i18n="inst_3">Pastikan area bebas (tidak menabrak iklan lain).</li>
+                    <li data-i18n="inst_4">Checkout pembayaran lalu pasang gambar Anda.</li>
+                </ol>
+            </div>
+
+            <div id="selection-panel" class="bg-gray-50 border border-gray-200 rounded-lg p-4 opacity-50 transition-opacity mt-auto mb-2">
+                <h3 class="font-semibold text-gray-800 text-sm mb-3" data-i18n="your_selection">Area Pilihan Anda</h3>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600" data-i18n="size">Ukuran:</span>
+                    <span class="font-medium text-gray-900" id="sel-size">0 x 0 blok</span>
+                </div>
+                <div class="flex justify-between text-sm mb-3">
+                    <span class="text-gray-600" data-i18n="total_price">Total Harga:</span>
+                    <span class="font-bold text-blue-600 text-lg" id="sel-price">$0.00</span>
+                </div>
+                <button id="btn-init-payment" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm" data-i18n="proceed_payment">
+                    Lanjut ke Pembayaran
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Canvas Area -->
+    <main class="flex-1 relative overflow-auto bg-gray-200 h-[55vh] md:h-full z-10" id="canvas-container">
+        <div class="p-12 inline-block min-w-full min-h-full flex items-center justify-center">
+            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair rounded-sm bg-white shadow-md"></canvas>
+        </div>
+
+        <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
+            <p id="tooltip-text" class="font-semibold">Text</p>
+            <p id="tooltip-link" class="text-blue-300">Link</p>
+            <p id="tooltip-expiry" class="text-gray-300 text-[10px]">Expiry</p>
+        </div>
+    </main>
+
+    <!-- Modal Auth -->
+    <div id="modal-auth" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 m-4 transform scale-95 transition-transform duration-300 relative">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-4 border-b pb-2 w-full">
+                    <button id="tab-login-btn" class="font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1" data-i18n="modal_login">Masuk</button>
+                    <button id="tab-register-btn" class="font-semibold text-gray-400 text-base pb-1" data-i18n="modal_register">Daftar Akun</button>
+                </div>
+                <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
+            </div>
+
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email / Username</label>
+                    <input type="text" id="login-email" required placeholder="email@domain.com atau Admin" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
+                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_login">
+                    Masuk Sekarang
+                </button>
+            </form>
+
+            <form id="form-register" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email</label>
+                    <input type="email" id="reg-email" required placeholder="email@domain.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
+                    <input type="password" id="reg-pass" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_register">
+                    Daftar Akun Baru
+                </button>
+            </form>
+        </div>
+    </div>
+
+        <!-- Modal Pembayaran -->
+    <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800" data-i18n="secure_checkout">Secure Checkout</h2>
+                <button onclick="closeModal('modal-payment')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left border border-gray-100 flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" data-i18n="total_due">Total Due</p>
+                    <p class="text-2xl font-bold text-gray-900" id="payment-amount">$0.00</p>
+                    <p class="text-[11px] text-green-600 mt-1 font-medium" data-i18n="active_30_days">✓ Aktif tampil selama 30 hari</p>
+                </div>
+                <div class="text-right hidden" id="qris-amount-container">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total (IDR)</p>
+                    <p class="text-xl font-bold text-blue-700" id="payment-amount-idr">Rp 0</p>
+                </div>
+            </div>
+
+            <!-- Tab Metode Pembayaran -->
+            <div class="flex gap-2 border-b border-gray-200 mb-4 pb-1">
+                <button id="tab-paypal" class="flex-1 font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 text-sm transition-colors">PayPal</button>
+                <button id="tab-qris" class="flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors">QRIS (IDR)</button>
+            </div>
+
+            <!-- Kontainer PayPal -->
+            <div id="container-paypal" class="w-full">
+                <!-- Kontainer Tombol Resmi PayPal SDK -->
+                <div id="paypal-button-container"
