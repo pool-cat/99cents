@@ -23,10 +23,25 @@
     <!-- Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- PAYPAL SDK with User's Official Client ID -->
+    <!-- PAYPAL SDK -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAAKYA_-TFfNMaHyHudwCP1LiAMh99bk_QPLjHP7_lL93tAPEBY1fLqtjpaDxFiX1zvdKTxSV8-rArxZx0&currency=USD"></script>
 
-    <style>body{font-family:'Inter',sans-serif}#gridCanvas{image-rendering:pixelated;box-shadow:0 10px 30px rgba(0,0,0,.2);background-color:#fff;display:block}::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:#e5e7eb;border-radius:5px}::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:#6b7280}#tooltip{pointer-events:none;transition:opacity .2s}#paypal-button-container{min-height:150px;width:100%}</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #gridCanvas {
+            image-rendering: pixelated;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background-color: #ffffff;
+            display: block;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        #tooltip { pointer-events: none; transition: opacity 0.2s; }
+        #paypal-button-container { min-height: 150px; width: 100%; }
+    </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row">
 
@@ -39,9 +54,7 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm" data-i18n="btn_login">
-                    Masuk
-                </button>
+                <button id="btn-open-auth" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm" data-i18n="btn_login">Masuk</button>
                 
                 <div class="flex items-center gap-1 cursor-pointer select-none" id="lang-toggle-container">
                     <span class="text-xs font-bold text-gray-800 transition-colors" id="lbl-id">ID</span>
@@ -53,7 +66,6 @@
             </div>
         </div>
         
-        <!-- Status User Login Cloud -->
         <div id="user-status-bar" class="px-5 py-2 bg-blue-50 border-b border-blue-100 flex justify-between items-center hidden">
             <span class="text-xs text-blue-800 font-medium truncate" id="user-welcome-text">Halo, User</span>
             <button id="btn-logout" class="text-xs text-red-600 hover:underline font-semibold" data-i18n="btn_logout">Keluar</button>
@@ -81,15 +93,11 @@
                 <p class="text-xs text-gray-500 mt-2 italic" data-i18n="note_block">* Aktif tampil selama 30 hari (1 bulan).</p>
             </div>
 
-            <!-- Kotak Informasi Iklan Pengguna -->
             <div id="user-ads-panel" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hidden">
                 <h2 class="font-semibold text-blue-900 text-sm mb-2" data-i18n="my_ads">Iklan Aktif Saya</h2>
-                <div id="user-ads-list" class="space-y-3 max-h-48 overflow-y-auto pr-1">
-                    <!-- Dynamic user ads info injected here -->
-                </div>
+                <div id="user-ads-list" class="space-y-3 max-h-48 overflow-y-auto pr-1"></div>
             </div>
 
-            <!-- Panel Khusus Admin -->
             <div id="admin-panel-section" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
                 <h2 class="font-semibold text-amber-800 text-sm mb-1" data-i18n="admin_panel">Panel Admin</h2>
                 <p class="text-xs text-amber-700 mb-2" data-i18n="admin_paypal_label">Link PayPal.Me Anda:</p>
@@ -126,8 +134,9 @@
 
     <!-- Canvas Area -->
     <main class="flex-1 relative overflow-auto bg-gray-200 h-[55vh] md:h-full z-10" id="canvas-container">
-        <div class="p-12 inline-block min-w-full min-h-full flex items-center justify-center">
-            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair rounded-sm bg-white shadow-md"></canvas>
+        <!-- Diperbaiki: Menghapus flex yang menimpa ukuran asli canvas -->
+        <div class="p-12 inline-block min-w-max min-h-max">
+            <canvas id="gridCanvas" width="4000" height="2000" class="cursor-crosshair rounded-sm bg-white shadow-md block"></canvas>
         </div>
 
         <div id="tooltip" class="absolute z-20 bg-black/80 text-white text-xs px-3 py-2 rounded-md shadow-lg opacity-0 whitespace-nowrap">
@@ -147,7 +156,6 @@
                 </div>
                 <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
             </div>
-
             <form id="form-login" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email / Username</label>
@@ -157,11 +165,8 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
                     <input type="password" id="login-pass" required placeholder="••••••••" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_login">
-                    Masuk Sekarang
-                </button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_login">Masuk Sekarang</button>
             </form>
-
             <form id="form-register" class="space-y-3 hidden">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_email">Email</label>
@@ -171,14 +176,12 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="lbl_pass">Kata Sandi</label>
                     <input type="password" id="reg-pass" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_register">
-                    Daftar Akun Baru
-                </button>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition-colors shadow-sm" data-i18n="btn_submit_register">Daftar Akun Baru</button>
             </form>
         </div>
     </div>
 
-        <!-- Modal Pembayaran -->
+    <!-- Modal Pembayaran -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 text-center transform scale-95 transition-transform duration-300 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -198,13 +201,887 @@
                 </div>
             </div>
 
-            <!-- Tab Metode Pembayaran -->
             <div class="flex gap-2 border-b border-gray-200 mb-4 pb-1">
                 <button id="tab-paypal" class="flex-1 font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 text-sm transition-colors">PayPal</button>
                 <button id="tab-qris" class="flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors">QRIS (IDR)</button>
             </div>
 
-            <!-- Kontainer PayPal -->
             <div id="container-paypal" class="w-full">
-                <!-- Kontainer Tombol Resmi PayPal SDK -->
-                <div id="paypal-button-container"
+                <div id="paypal-button-container" class="w-full mb-3 min-h-[150px]"></div>
+                <div class="w-full space-y-2 mb-2">
+                    <a id="paypal-me-btn" href="https://paypal.me/99Centscents" target="_blank" class="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-medium py-2.5 px-4 rounded-lg text-xs transition-colors shadow flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.022.382 5.47 0 5.996 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.026-.64 3.282-2.583 5.426-5.59 5.426H11.23l-1.34 8.572a.641.641 0 0 1-.634.544h-2.18z"/></svg>
+                        <span data-i18n="open_paypal_me">Buka Link Pembayaran PayPal.Me</span>
+                    </a>
+                </div>
+            </div>
+
+            <div id="container-qris" class="w-full hidden text-left">
+                <div class="bg-[#4C349C] text-white rounded-t-lg p-3 flex justify-between items-center">
+                    <span class="font-semibold text-sm">Pembayaran QRIS</span>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="h-5 bg-white px-1 rounded">
+                </div>
+                <div class="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-white flex flex-col items-center">
+                    <div class="bg-blue-50 border border-blue-100 text-blue-800 text-xs p-3 rounded mb-4 w-full flex gap-2 items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p><strong>Penting:</strong> Scan kode QR ini menggunakan aplikasi m-Banking atau e-Wallet Anda. Pastikan nominal sesuai.</p>
+                    </div>
+                    <div id="qris-code-box" class="bg-white p-2 border-2 border-dashed border-gray-300 rounded-lg mb-3">
+                        <div class="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Generating QR...</div>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-4 text-center font-medium">NMID: ID1026620408843<br>A/N: 99 CENTS, LAYANAN PERIKLA</p>
+                    <button id="btn-confirm-qris" class="w-full bg-[#4C349C] hover:bg-[#3b277d] text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors shadow">
+                        Saya Sudah Bayar via QRIS
+                    </button>
+                </div>
+            </div>
+
+            <div id="admin-bypass-container" class="w-full mt-4 hidden">
+                <button id="btn-bypass-payment" class="w-full py-1.5 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 transition-colors" data-i18n="admin_bypass">
+                    [Admin Mode] Lewati Pembayaran
+                </button>
+            </div>
+            
+            <button id="btn-confirm-payment" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow hidden" data-i18n="btn_confirm_paid">
+                Sudah Bayar via PayPal, Lanjut ke Upload Iklan &rarr;
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Setup Iklan -->
+    <div id="modal-content" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-gray-800" data-i18n="ad_details">Detail Iklan Anda</h2>
+                <button onclick="closeModal('modal-content')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div id="receipt-upload-section">
+                    <label class="block text-sm font-medium text-red-700 mb-1" data-i18n="upload_receipt">Unggah Bukti Pembayaran (Wajib)</label>
+                    <input type="file" id="payment-receipt" accept="image/*,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 border border-gray-300 rounded-md">
+                    <p class="text-[10px] text-gray-500 mt-1 italic">*Iklan Anda akan direview oleh admin untuk verifikasi pembayaran.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="upload_img">Unggah Gambar Iklan</label>
+                    <input type="file" id="ad-image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_text">Teks/Judul Iklan</label>
+                    <input type="text" id="ad-text" data-i18n-ph="ad_text_ph" placeholder="Cth: Sewa Mobil Jakarta" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="ad_link">Tautan Web URL</label>
+                    <input type="url" id="ad-link" data-i18n-ph="ad_link_ph" placeholder="https://www.websiteanda.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="pt-4 flex justify-end gap-2">
+                    <button onclick="closeModal('modal-content')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg" data-i18n="btn_cancel">Batal</button>
+                    <button id="btn-publish-ad" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg" data-i18n="btn_publish">Pasang Iklan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 translate-y-[-150%] opacity-0">
+        <span id="toast-icon"></span>
+        <span id="toast-msg" class="text-sm font-medium">Message</span>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = "https://dnymbpjcqeupvexxkkai.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_NK3blpaL1GM8puCldwrwCQ_P6SZnYjk";
+        
+        let supabaseClient = null;
+        try {
+            if (typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch(e) {
+            console.warn("Supabase gagal diinisialisasi.");
+        }
+
+        // Bahasa
+        const i18nData = {
+            id: {
+                btn_login: "Masuk", btn_logout: "Keluar", subtitle: "Beli ruang pixel untuk iklan Anda selama 1 bulan.",
+                status_board: "Status Papan", sold: "Terjual:", available: "Tersedia:", price_per_block: "Harga per Blok:",
+                note_block: "* Aktif tampil selama 30 hari (1 bulan).", admin_panel: "Panel Admin", admin_paypal_label: "Link PayPal.Me Anda:",
+                btn_save_link: "Simpan Link", instruction: "Instruksi:", inst_1: "Geser kursor di area papan/canvas.",
+                inst_2_bold: "Klik & seret (drag)", inst_2: "untuk memilih area.", inst_3: "Pastikan area bebas (tidak menabrak iklan lain).",
+                inst_4: "Checkout pembayaran lalu pasang gambar Anda.", your_selection: "Area Pilihan Anda", size: "Ukuran:",
+                total_price: "Total Harga:", proceed_payment: "Lanjut ke Pembayaran", modal_login: "Masuk", modal_register: "Daftar Akun",
+                lbl_email: "Email / Username", lbl_pass: "Kata Sandi", btn_submit_login: "Masuk Sekarang", btn_submit_register: "Daftar Akun Baru",
+                secure_checkout: "Secure Checkout", total_due: "Total Due", active_30_days: "✓ Aktif tampil selama 30 hari",
+                open_paypal_me: "Buka Link Pembayaran PayPal.Me", btn_confirm_paid: "Sudah Bayar, Lanjut ke Upload Iklan →",
+                admin_bypass: "[Admin Mode] Lewati Pembayaran", ad_details: "Detail Iklan Anda", upload_img: "Unggah Gambar Iklan",
+                ad_text: "Teks/Judul Iklan", ad_link: "Tautan Web URL", ad_text_ph: "Cth: Sewa Mobil Jakarta", ad_link_ph: "https://www.websiteanda.com",
+                btn_cancel: "Batal", btn_publish: "Pasang Iklan", msg_collision: "Area bertabrakan dengan iklan lain!", msg_empty: "Pilih area kosong terlebih dahulu.",
+                msg_pay_success: "Pembayaran Berhasil & Dikonfirmasi!", msg_upload_req: "Harap unggah gambar atau masukkan teks iklan.",
+                msg_pub_success: "Iklan berhasil dipublikasikan (Aktif 30 hari)!", upload_receipt: "Unggah Bukti Pembayaran (Wajib)",
+                msg_receipt_req: "Harap unggah bukti pembayaran terlebih dahulu.", blocks: "blok", tooltip_link: "Klik untuk mengunjungi link",
+                expires_in: "Aktif sampai:", my_ads: "Iklan Aktif Saya", purchase_date: "Tanggal Pembelian:", total_boxes: "Jumlah Kotak:",
+                expires_on: "Berakhir Pada:", no_active_ads: "Belum ada iklan aktif yang Anda pasang."
+            },
+            en: {
+                btn_login: "Sign In", btn_logout: "Sign Out", subtitle: "Buy pixel space for your ad for 1 month.",
+                status_board: "Board Status", sold: "Sold:", available: "Available:", price_per_block: "Price per Block:",
+                note_block: "* Active for 30 days (1 month).", admin_panel: "Admin Panel", admin_paypal_label: "Your PayPal.Me Link:",
+                btn_save_link: "Save Link", instruction: "Instructions:", inst_1: "Hover over the canvas area.",
+                inst_2_bold: "Click & drag", inst_2: "to select your area.", inst_3: "Ensure it doesn't overlap existing ads.",
+                inst_4: "Checkout and upload your image.", your_selection: "Your Selection", size: "Size:",
+                total_price: "Total Price:", proceed_payment: "Proceed to Payment", modal_login: "Sign In", modal_register: "Register",
+                lbl_email: "Email / Username", lbl_pass: "Password", btn_submit_login: "Sign In Now", btn_submit_register: "Create New Account",
+                secure_checkout: "Secure Checkout", total_due: "Total Due", active_30_days: "✓ Active for 30 days",
+                open_paypal_me: "Open PayPal.Me Payment Link", btn_confirm_paid: "Paid, Proceed to Ad Upload →",
+                admin_bypass: "[Admin Mode] Skip Payment", ad_details: "Your Ad Details", upload_img: "Upload Ad Image",
+                ad_text: "Ad Text/Title", ad_link: "Web URL Link", ad_text_ph: "e.g. Jakarta Car Rental", ad_link_ph: "https://www.yourwebsite.com",
+                btn_cancel: "Cancel", btn_publish: "Publish Ad", msg_collision: "Area overlaps with another ad!", msg_empty: "Please select an empty area first.",
+                msg_pay_success: "Payment Successful & Confirmed!", msg_upload_req: "Please upload an image or enter text.",
+                msg_pub_success: "Ad successfully published (Active 30 days)!", upload_receipt: "Upload Payment Receipt (Required)",
+                msg_receipt_req: "Please upload your payment receipt first.", blocks: "blocks", tooltip_link: "Click to visit link",
+                expires_in: "Expires on:", my_ads: "My Active Ads", purchase_date: "Purchase Date:", total_boxes: "Total Boxes:",
+                expires_on: "Expires On:", no_active_ads: "No active ads placed yet."
+            }
+        };
+
+        let currentLang = "id";
+        const t = (key) => i18nData[currentLang][key] || key;
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18nData[currentLang][key]) el.innerText = i18nData[currentLang][key];
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (i18nData[currentLang][key]) el.placeholder = i18nData[currentLang][key];
+            });
+
+            const switchBg = document.getElementById('switch-bg');
+            const switchKnob = document.getElementById('switch-knob');
+            const lblId = document.getElementById('lbl-id');
+            const lblEn = document.getElementById('lbl-en');
+
+            if (switchBg) {
+                if (currentLang === 'en') {
+                    switchBg.className = 'relative w-8 h-4 bg-blue-600 rounded-full shadow-inner transition-colors duration-300 ease-in-out';
+                    switchKnob.className = 'absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-4';
+                    lblEn.className = 'text-xs font-bold text-gray-800 transition-colors';
+                    lblId.className = 'text-xs font-bold text-gray-400 transition-colors';
+                } else {
+                    switchBg.className = 'relative w-8 h-4 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out';
+                    switchKnob.className = 'absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ease-in-out transform translate-x-0';
+                    lblId.className = 'text-xs font-bold text-gray-800 transition-colors';
+                    lblEn.className = 'text-xs font-bold text-gray-400 transition-colors';
+                }
+            }
+            calculateStats();
+            updateSelectionUI();
+        }
+
+        document.getElementById('lang-toggle-container').addEventListener('click', () => {
+            currentLang = currentLang === 'id' ? 'en' : 'id';
+            applyLanguage();
+        });
+
+        // Konfigurasi Canvas
+        const GRID_COLS = 200, GRID_ROWS = 100, BLOCK_PX = 20;
+        const CANVAS_WIDTH = 4000, CANVAS_HEIGHT = 2000;
+        const PRICE_PER_BLOCK = 0.99;
+        
+        let ads = [], isDragging = false, currentSelection = null, hoverGridPos = {x: -1, y: -1};
+        let cachedImages = {}, currentTotalPrice = 0, currentTotalBlocks = 0, currentUser = null;
+
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+        const selectionPanel = document.getElementById('selection-panel');
+        const selSizeText = document.getElementById('sel-size');
+        const selPriceText = document.getElementById('sel-price');
+        const btnInitPayment = document.getElementById('btn-init-payment');
+        
+        const statsSold = document.getElementById('stats-sold');
+        const statsAvail = document.getElementById('stats-available');
+        const tooltip = document.getElementById('tooltip');
+        const tooltipText = document.getElementById('tooltip-text');
+        const tooltipLink = document.getElementById('tooltip-link');
+        const tooltipExpiry = document.getElementById('tooltip-expiry');
+        const paymentAmountText = document.getElementById('payment-amount');
+
+        const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+        async function init() {
+            try {
+                applyLanguage();
+                
+                const savedPaypalLink = localStorage.getItem('user_paypal_link') || "https://paypal.me/99Centscents";
+                const adminPaypalInput = document.getElementById('admin-paypal-link');
+                if (adminPaypalInput) adminPaypalInput.value = savedPaypalLink;
+
+                if (supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        currentUser = session.user;
+                        updateAuthUI();
+                    }
+                    supabaseClient.auth.onAuthStateChange((event, session) => {
+                        currentUser = session ? session.user : null;
+                        updateAuthUI();
+                    });
+                    await fetchAdsFromCloud();
+                }
+
+                calculateStats();
+                drawCanvas();
+                setupCanvasEvents();
+                setupUIEvents();
+            } catch (err) {
+                console.error("Kesalahan saat memuat aplikasi:", err);
+            }
+        }
+
+        async function fetchAdsFromCloud() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('ads').select('*');
+            if (!error && data) {
+                const now = new Date();
+                ads = data.filter(ad => !ad.expires_at || new Date(ad.expires_at) > now).map(ad => ({
+                    x: ad.x, y: ad.y, w: ad.w, h: ad.h,
+                    text: ad.text, link: ad.link, imageUrl: ad.image_url,
+                    createdAt: ad.created_at, expiresAt: ad.expires_at, userEmail: ad.user_email, color: '#3b82f6'
+                }));
+                
+                for (let ad of ads) {
+                    if (ad.imageUrl && !cachedImages[ad.imageUrl]) {
+                        await new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => { cachedImages[ad.imageUrl] = img; resolve(); };
+                            img.onerror = resolve;
+                            img.src = ad.imageUrl;
+                        });
+                    }
+                }
+                calculateStats();
+                drawCanvas();
+            }
+        }
+
+        function setupUIEvents() {
+            // Setup Tab Pembayaran
+            const tabPaypal = document.getElementById('tab-paypal');
+            const tabQris = document.getElementById('tab-qris');
+            const containerPaypal = document.getElementById('container-paypal');
+            const containerQris = document.getElementById('container-qris');
+            const qrisAmountContainer = document.getElementById('qris-amount-container');
+            const btnConfirmPayment = document.getElementById('btn-confirm-payment');
+
+            tabPaypal.addEventListener('click', () => {
+                tabPaypal.className = "flex-1 font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 text-sm transition-colors";
+                tabQris.className = "flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors";
+                containerPaypal.classList.remove('hidden');
+                containerQris.classList.add('hidden');
+                qrisAmountContainer.classList.add('hidden');
+            });
+
+            tabQris.addEventListener('click', () => {
+                tabQris.className = "flex-1 font-semibold text-[#4C349C] border-b-2 border-[#4C349C] pb-2 text-sm transition-colors";
+                tabPaypal.className = "flex-1 font-semibold text-gray-400 pb-2 text-sm transition-colors";
+                containerPaypal.classList.add('hidden');
+                containerQris.classList.remove('hidden');
+                qrisAmountContainer.classList.remove('hidden');
+                btnConfirmPayment.classList.add('hidden');
+            });
+
+            document.getElementById('btn-confirm-qris').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(currentLang === 'id' ? "Silakan upload bukti pembayaran & materi iklan Anda." : "Please upload payment receipt & ad materials.", "success");
+                
+                document.getElementById('ad-image').value = "";
+                document.getElementById('ad-text').value = "";
+                document.getElementById('ad-link').value = "";
+                document.getElementById('payment-receipt').value = "";
+                document.getElementById('receipt-upload-section').classList.remove('hidden');
+                
+                setTimeout(() => openModal('modal-content'), 500);
+            });
+
+            // Setup Auth Modals
+            const btnOpenAuth = document.getElementById('btn-open-auth');
+            const tabLoginBtn = document.getElementById('tab-login-btn');
+            const tabRegisterBtn = document.getElementById('tab-register-btn');
+            const formLogin = document.getElementById('form-login');
+            const formRegister = document.getElementById('form-register');
+            const btnLogout = document.getElementById('btn-logout');
+
+            btnOpenAuth.addEventListener('click', () => openModal('modal-auth'));
+
+            tabLoginBtn.addEventListener('click', () => {
+                tabLoginBtn.className = "font-bold text-blue-600 text-base border-b-2 border-blue-600 pb-1";
+                tabRegisterBtn.className = "font-semibold text-gray-400 text-base pb-1";
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            });
+
+            tabRegisterBtn.addEventListener('click', () => {
+                tabRegisterBtn.className = "font-bold text-green-600 text-base border-b-2 border-green-600 pb-1";
+                tabLoginBtn.className = "font-semibold text-gray-400 text-base pb-1";
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            });
+
+            formLogin.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value.trim();
+                const pass = document.getElementById('login-pass').value;
+
+                if (email === "99Cents Space" && pass === "Ryutaka_86@") {
+                    currentUser = { email: "99Cents Space", role: "admin" };
+                    closeModal('modal-auth');
+                    updateAuthUI();
+                    showToast(currentLang === 'id' ? "Login Berhasil sebagai Admin!" : "Successfully logged in as Admin!", "success");
+                    return;
+                }
+
+                if (!supabaseClient) {
+                    showToast("Harap atur kredensial Supabase.", "error");
+                    return;
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                if (error) {
+                    showToast(error.message, "error");
+                } else {
+                    currentUser = data.user;
+                    closeModal('modal-auth');
+                    updateAuthUI();
+                    showToast(currentLang === 'id' ? "Login Berhasil!" : "Login Successful!", "success");
+                }
+            });
+
+            formRegister.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('reg-email').value.trim();
+                const pass = document.getElementById('reg-pass').value;
+
+                if (!supabaseClient) {
+                    showToast("Harap atur kredensial Supabase.", "error");
+                    return;
+                }
+
+                const { error } = await supabaseClient.auth.signUp({ email, password: pass });
+                if (error) {
+                    showToast(error.message, "error");
+                } else {
+                    showToast(currentLang === 'id' ? "Pendaftaran berhasil! Silakan masuk." : "Registration successful! Please sign in.", "success");
+                    tabLoginBtn.click();
+                }
+            });
+
+            btnLogout.addEventListener('click', async () => {
+                if (supabaseClient) await supabaseClient.auth.signOut();
+                currentUser = null;
+                updateAuthUI();
+                showToast(currentLang === 'id' ? "Berhasil keluar akun." : "Signed out successfully.", "info");
+            });
+
+            document.getElementById('btn-save-paypal-link').addEventListener('click', () => {
+                const val = document.getElementById('admin-paypal-link').value.trim();
+                if (!val) { showToast("Masukkan link PayPal yang valid.", "error"); return; }
+                localStorage.setItem('user_paypal_link', val);
+                showToast(currentLang === 'id' ? "Link PayPal berhasil disimpan!" : "PayPal link saved successfully!", "success");
+            });
+
+            btnInitPayment.addEventListener('click', async () => {
+                if (!currentUser) {
+                    showToast(currentLang === 'id' ? "Silakan masuk terlebih dahulu untuk membeli ruang iklan." : "Please sign in first to purchase ad space.", "error");
+                    openModal('modal-auth');
+                    return;
+                }
+                
+                if (!currentSelection) return;
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                
+                if (!isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                    showToast(t("msg_empty"), "error");
+                    return;
+                }
+                
+                paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+                btnConfirmPayment.classList.add('hidden');
+                
+                let paypalLink = localStorage.getItem('user_paypal_link') || "https://paypal.me/99Centscents";
+                if (!paypalLink.endsWith('/')) paypalLink += '/';
+                const paypalMeBtn = document.getElementById('paypal-me-btn');
+                paypalMeBtn.href = `${paypalLink}${currentTotalPrice.toFixed(2)}USD`;
+                paypalMeBtn.onclick = () => { btnConfirmPayment.classList.remove('hidden'); };
+                
+                const container = document.getElementById('paypal-button-container');
+                container.innerHTML = '';
+                
+                if (window.paypal) {
+                    try {
+                        paypal.Buttons({
+                            style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'checkout' },
+                            createOrder: function(data, actions) {
+                                return actions.order.create({
+                                    purchase_units: [{
+                                        amount: { currency_code: "USD", value: currentTotalPrice.toFixed(2) },
+                                        description: `Pixel Ads Space - ${currentTotalBlocks} blocks (30 days)`
+                                    }]
+                                });
+                            },
+                            onApprove: function(data, actions) {
+                                return actions.order.capture().then(function(details) {
+                                    closeModal('modal-payment');
+                                    showToast(t("msg_pay_success"), "success");
+                                    document.getElementById('ad-image').value = "";
+                                    document.getElementById('ad-text').value = "";
+                                    document.getElementById('ad-link').value = "";
+                                    document.getElementById('receipt-upload-section').classList.add('hidden');
+                                    setTimeout(() => openModal('modal-content'), 500);
+                                });
+                            },
+                            onCancel: function(data) { showToast(currentLang === 'id' ? "Pembayaran dibatalkan." : "Payment cancelled.", "info"); },
+                            onError: function(err) { console.error("PayPal SDK Error:", err); }
+                        }).render('#paypal-button-container');
+                    } catch (e) { console.error(e); }
+                }
+
+                const bypassContainer = document.getElementById('admin-bypass-container');
+                if (currentUser && (currentUser.role === 'admin' || currentUser.email === "99Cents Space")) {
+                    bypassContainer.classList.remove('hidden');
+                } else {
+                    bypassContainer.classList.add('hidden');
+                }
+
+                let exchangeRate = 18144;
+                try {
+                    document.getElementById('payment-amount-idr').innerText = "Menghitung...";
+                    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.rates && data.rates.IDR) exchangeRate = data.rates.IDR;
+                    }
+                } catch(e) {
+                    console.warn("Gagal mengambil kurs live.", e);
+                }
+                const totalIDR = currentTotalPrice * exchangeRate;
+                document.getElementById('payment-amount-idr').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalIDR);
+
+                document.getElementById('qris-code-box').innerHTML = '<img src="QRIS 99 Cents Space_2.jpeg" class="w-full max-w-[200px] h-auto mx-auto rounded shadow-sm" alt="QRIS Code">';
+
+                tabPaypal.click();
+                openModal('modal-payment');
+            });
+
+            btnConfirmPayment.addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(currentLang === 'id' ? "Silakan upload bukti pembayaran & materi iklan Anda." : "Please upload payment receipt & ad materials.", "success");
+                document.getElementById('ad-image').value = "";
+                document.getElementById('ad-text').value = "";
+                document.getElementById('ad-link').value = "";
+                document.getElementById('payment-receipt').value = "";
+                document.getElementById('receipt-upload-section').classList.remove('hidden');
+                setTimeout(() => openModal('modal-content'), 500);
+            });
+
+            document.getElementById('btn-publish-ad').addEventListener('click', publishAd);
+            document.getElementById('btn-bypass-payment').addEventListener('click', () => {
+                closeModal('modal-payment');
+                showToast(currentLang === 'id' ? "Pembayaran dilewati (Mode Admin)" : "Payment skipped (Admin Mode)", "success");
+                document.getElementById('ad-image').value = "";
+                document.getElementById('ad-text').value = "";
+                document.getElementById('ad-link').value = "";
+                document.getElementById('receipt-upload-section').classList.add('hidden');
+                setTimeout(() => openModal('modal-content'), 500);
+            });
+        }
+
+        function updateAuthUI() {
+            const btnOpenAuth = document.getElementById('btn-open-auth');
+            const statusBar = document.getElementById('user-status-bar');
+            const welcomeText = document.getElementById('user-welcome-text');
+            const adminPanel = document.getElementById('admin-panel-section');
+            const adsPanel = document.getElementById('user-ads-panel');
+            
+            if (currentUser) {
+                btnOpenAuth.classList.add('hidden');
+                statusBar.classList.remove('hidden');
+                const displayName = currentUser.email || currentUser.name;
+                welcomeText.innerText = `${displayName}`;
+                
+                if (displayName === "99Cents Space" || currentUser.role === 'admin') {
+                    adminPanel.classList.remove('hidden');
+                } else {
+                    adminPanel.classList.add('hidden');
+                }
+                adsPanel.classList.remove('hidden');
+                renderUserAds();
+            } else {
+                btnOpenAuth.classList.remove('hidden');
+                statusBar.classList.add('hidden');
+                adminPanel.classList.add('hidden');
+                adsPanel.classList.add('hidden');
+            }
+        }
+
+        function renderUserAds() {
+            const container = document.getElementById('user-ads-list');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const currentEmail = currentUser ? (currentUser.email || currentUser.name) : "";
+            const userAds = ads.filter(ad => ad.userEmail === currentEmail || (currentEmail === "99Cents Space" && ad.userEmail === "guest"));
+            
+            if (userAds.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500 italic">${t("no_active_ads")}</p>`;
+                return;
+            }
+
+            userAds.forEach((ad, i) => {
+                const blocks = ad.w * ad.h;
+                const buyDate = ad.createdAt ? new Date(ad.createdAt).toLocaleString() : '-';
+                const expDate = ad.expiresAt ? new Date(ad.expiresAt).toLocaleString() : '-';
+                
+                const card = document.createElement('div');
+                card.className = "bg-white p-2.5 rounded border border-blue-200 text-xs shadow-sm space-y-1";
+                card.innerHTML = `
+                    <div class="font-semibold text-blue-900 truncate">#${i+1} - ${ad.text || 'Pixel Ad'}</div>
+                    <div class="text-gray-600 flex justify-between"><span data-i18n="purchase_date">${t("purchase_date")}</span> <span class="font-medium text-gray-900">${buyDate}</span></div>
+                    <div class="text-gray-600 flex justify-between"><span data-i18n="total_boxes">${t("total_boxes")}</span> <span class="font-medium text-gray-900">${blocks} ${t("blocks")} (${ad.w}x${ad.h})</span></div>
+                    <div class="text-gray-600 flex justify-between pt-1 border-t border-gray-100"><span data-i18n="expires_on" class="text-red-600 font-medium">${t("expires_on")}</span> <span class="font-semibold text-red-600">${expDate}</span></div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function calculateStats() {
+            let soldBlocks = 0;
+            ads.forEach(ad => { soldBlocks += (ad.w * ad.h); });
+            const availableBlocks = 20000 - soldBlocks;
+            const localeStr = currentLang === 'id' ? 'id-ID' : 'en-US';
+            statsSold.innerText = `${soldBlocks.toLocaleString(localeStr)} ${t("blocks")}`;
+            statsAvail.innerText = `${availableBlocks.toLocaleString(localeStr)} ${t("blocks")}`;
+        }
+
+        function drawCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            ctx.translate(0.5, 0.5);
+            ctx.beginPath();
+            for (let x = 0; x <= CANVAS_WIDTH; x += BLOCK_PX) { ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_HEIGHT); }
+            for (let y = 0; y <= CANVAS_HEIGHT; y += BLOCK_PX) { ctx.moveTo(0, y); ctx.lineTo(CANVAS_WIDTH, y); }
+            ctx.stroke();
+            ctx.translate(-0.5, -0.5);
+            
+            ads.forEach(ad => {
+                const px = ad.x * BLOCK_PX, py = ad.y * BLOCK_PX, pw = ad.w * BLOCK_PX, ph = ad.h * BLOCK_PX;
+                
+                if (ad.imageUrl && cachedImages[ad.imageUrl]) {
+                    ctx.drawImage(cachedImages[ad.imageUrl], px, py, pw, ph);
+                } else {
+                    ctx.fillStyle = ad.color || '#3b82f6';
+                    ctx.fillRect(px, py, pw, ph);
+                    if (pw >= 40 && ph >= 20 && ad.text) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 14px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(ad.text.substring(0, Math.floor(pw / 8)), px + pw / 2, py + ph / 2);
+                    }
+                }
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.strokeRect(px, py, pw, ph);
+            });
+
+            if (currentSelection) {
+                const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                const px = rect.x * BLOCK_PX, py = rect.y * BLOCK_PX, pw = rect.w * BLOCK_PX, ph = rect.h * BLOCK_PX;
+                const free = isAreaFree(rect.x, rect.y, rect.w, rect.h);
+                
+                ctx.fillStyle = free ? 'rgba(59, 130, 246, 0.45)' : 'rgba(239, 68, 68, 0.45)';
+                ctx.fillRect(px, py, pw, ph);
+                ctx.strokeStyle = free ? '#2563eb' : '#dc2626';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(px, py, pw, ph);
+            }
+        }
+
+        function getGridCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let cx = Math.max(0, Math.min((clientX - rect.left) * scaleX, CANVAS_WIDTH - 0.1));
+            let cy = Math.max(0, Math.min((clientY - rect.top) * scaleY, CANVAS_HEIGHT - 0.1));
+            return { x: Math.floor(cx / BLOCK_PX), y: Math.floor(cy / BLOCK_PX) };
+        }
+
+        function getSelectionRect(sx, sy, ex, ey) {
+            const x = Math.min(sx, ex);
+            const y = Math.min(sy, ey);
+            const w = Math.max(sx, ex) - x + 1;
+            const h = Math.max(sy, ey) - y + 1;
+            return { x, y, w, h };
+        }
+
+        function isAreaFree(x, y, w, h) {
+            return !ads.some(ad => (x < ad.x + ad.w && x + w > ad.x && y < ad.y + ad.h && y + h > ad.y));
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                const coords = getGridCoords(e.clientX, e.clientY);
+                isDragging = true;
+                currentSelection = { startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y };
+                drawCanvas();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (e.target === canvas && !isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    if (coords.x !== hoverGridPos.x || coords.y !== hoverGridPos.y) {
+                        hoverGridPos = coords;
+                        const hoveredAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+                        
+                        if (hoveredAd && (hoveredAd.text || hoveredAd.link)) {
+                            tooltip.style.opacity = '1';
+                            tooltip.style.left = (e.pageX + 15) + 'px';
+                            tooltip.style.top = (e.pageY + 15) + 'px';
+                            tooltipText.innerText = hoveredAd.text || 'Pixel Ad';
+                            tooltipLink.innerText = hoveredAd.link ? t("tooltip_link") : '';
+                            if (hoveredAd.expiresAt) {
+                                tooltipExpiry.innerText = `${t("expires_in")} ${new Date(hoveredAd.expiresAt).toLocaleDateString()}`;
+                            } else {
+                                tooltipExpiry.innerText = '';
+                            }
+                            canvas.style.cursor = 'pointer';
+                        } else {
+                            tooltip.style.opacity = '0';
+                            canvas.style.cursor = 'crosshair';
+                        }
+                    } else if (tooltip.style.opacity === '1') {
+                        tooltip.style.left = (e.pageX + 15) + 'px';
+                        tooltip.style.top = (e.pageY + 15) + 'px';
+                    }
+                } else {
+                    tooltip.style.opacity = '0';
+                }
+
+                if (isDragging) {
+                    const coords = getGridCoords(e.clientX, e.clientY);
+                    currentSelection.endX = coords.x;
+                    currentSelection.endY = coords.y;
+                    drawCanvas();
+                    updateSelectionUI();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+                    if (isAreaFree(rect.x, rect.y, rect.w, rect.h)) {
+                        if(btnInitPayment) btnInitPayment.disabled = false;
+                    } else {
+                        showToast(t("msg_collision"), "error");
+                        if(btnInitPayment) btnInitPayment.disabled = true;
+                    }
+                    updateSelectionUI();
+                }
+            });
+
+            canvas.addEventListener('click', (e) => {
+                if (currentSelection && (currentSelection.startX !== currentSelection.endX || currentSelection.startY !== currentSelection.endY)) {
+                    return;
+                }
+                const coords = getGridCoords(e.clientX, e.clientY);
+                const clickedAd = ads.find(ad => coords.x >= ad.x && coords.x < ad.x + ad.w && coords.y >= ad.y && coords.y < ad.y + ad.h);
+                if (clickedAd && clickedAd.link) {
+                    let url = clickedAd.link;
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) { url = 'https://' + url; }
+                    window.open(url, '_blank');
+                }
+            });
+        }
+
+        function updateSelectionUI() {
+            if (!currentSelection) {
+                selectionPanel.classList.add('opacity-50');
+                if(btnInitPayment) btnInitPayment.disabled = true;
+                selSizeText.innerText = `0 x 0 ${t("blocks")}`;
+                selPriceText.innerText = formatCurrency(0);
+                return;
+            }
+            selectionPanel.classList.remove('opacity-50');
+            
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            const blocks = rect.w * rect.h;
+            currentTotalBlocks = blocks;
+            currentTotalPrice = blocks * PRICE_PER_BLOCK;
+            
+            const localeStr = currentLang === 'id' ? 'id-ID' : 'en-US';
+            selSizeText.innerText = `${rect.w} x ${rect.h} ${t("blocks")} (${(blocks * 400).toLocaleString(localeStr)} px)`;
+            selPriceText.innerText = formatCurrency(currentTotalPrice);
+            paymentAmountText.innerText = formatCurrency(currentTotalPrice);
+        }
+
+        window.openModal = function(id) {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            inner.classList.remove('scale-95');
+        }
+
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            const inner = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            inner.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function showToast(msg, type = "info") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = msg;
+            
+            if (type === "error") {
+                toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 bg-red-600";
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            } else if (type === "success") {
+                toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 bg-green-600";
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+            } else {
+                toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 bg-gray-700";
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+            }
+            
+            requestAnimationFrame(() => { toast.classList.remove('translate-y-[-150%]', 'opacity-0'); });
+            setTimeout(() => { toast.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3500);
+        }
+
+        async function publishAd() {
+            if (!currentSelection) return;
+
+            const receiptInput = document.getElementById('payment-receipt');
+            const receiptSection = document.getElementById('receipt-upload-section');
+            if (!receiptSection.classList.contains('hidden') && receiptInput.files.length === 0) {
+                showToast(t("msg_receipt_req"), "error");
+                return;
+            }
+
+            const adText = document.getElementById('ad-text').value.trim();
+            const adLink = document.getElementById('ad-link').value.trim();
+            const imageInput = document.getElementById('ad-image');
+            
+            if (!adText && imageInput.files.length === 0) {
+                showToast(t("msg_upload_req"), "error");
+                return;
+            }
+
+            const rect = getSelectionRect(currentSelection.startX, currentSelection.startY, currentSelection.endX, currentSelection.endY);
+            let imageUrl = null;
+            let receiptData = null;
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+            if (!receiptSection.classList.contains('hidden') && receiptInput.files.length > 0) {
+                try {
+                    receiptData = await readFileAsDataURL(receiptInput.files[0]);
+                } catch(e) {
+                    console.error("Gagal membaca bukti pembayaran", e);
+                    showToast("Gagal memproses file bukti pembayaran.", "error");
+                    return;
+                }
+            }
+
+            if (imageInput.files && imageInput.files[0]) {
+                try {
+                    imageUrl = await processImageFile(imageInput.files[0], rect.w * BLOCK_PX, rect.h * BLOCK_PX);
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => { cachedImages[imageUrl] = img; resolve(); };
+                        img.src = imageUrl;
+                    });
+                } catch (err) { console.error(err); }
+            }
+
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 30);
+            const now = new Date();
+            const currentEmail = currentUser ? (currentUser.email || currentUser.name) : "guest";
+
+            const payload = {
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h,
+                text: adText, link: adLink, image_url: imageUrl, receipt_data: receiptData,
+                created_at: now.toISOString(), expires_at: expires.toISOString(),
+                user_email: currentEmail
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('ads').insert([payload]);
+                if (error) {
+                    showToast("Gagal menyimpan ke cloud: " + error.message, "error");
+                    return;
+                }
+            }
+
+            ads.push({
+                x: rect.x, y: rect.y, w: rect.w, h: rect.h,
+                text: adText, link: adLink, imageUrl: imageUrl,
+                createdAt: now.toISOString(), expiresAt: expires.toISOString(),
+                userEmail: currentEmail, color: randomColor
+            });
+
+            showToast(t("msg_pub_success"), "success");
+            closeModal('modal-content');
+            currentSelection = null;
+            updateSelectionUI();
+            calculateStats();
+            drawCanvas();
+            
+            if (currentUser) renderUserAds();
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function processImageFile(file, targetWidth, targetHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = targetWidth;
+                        tempCanvas.height = targetHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.imageSmoothingEnabled = true;
+                        tempCtx.imageSmoothingQuality = 'high';
+                        tempCtx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        resolve(tempCanvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
